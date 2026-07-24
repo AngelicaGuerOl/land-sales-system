@@ -5,3 +5,9 @@ dist/
 .DS_Store
 .idea/
 *.iml
+
+# Private reference documents
+docs/reference/*.pdf
+
+# Windows downloaded-file metadata
+*:Zone.Identifier
