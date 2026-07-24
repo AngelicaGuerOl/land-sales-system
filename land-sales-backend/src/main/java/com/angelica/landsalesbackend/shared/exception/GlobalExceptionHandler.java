@@ -4,6 +4,7 @@ import com.angelica.landsalesbackend.lot.exception.LotConflictException;
 import com.angelica.landsalesbackend.lot.exception.LotValidationException;
 import com.angelica.landsalesbackend.block.exception.BlockConflictException;
 import com.angelica.landsalesbackend.block.exception.BulkLotConflictException;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
@@ -42,6 +43,13 @@ public class GlobalExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
+        return error(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
+    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    ResponseEntity<ApiErrorResponse> constraintValidation(ConstraintViolationException ex, HttpServletRequest request) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        ex.getConstraintViolations().forEach(violation -> errors.put(violation.getPropertyPath().toString(), violation.getMessage()));
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
     }
 

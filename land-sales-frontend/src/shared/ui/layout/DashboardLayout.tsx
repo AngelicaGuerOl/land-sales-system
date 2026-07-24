@@ -6,6 +6,7 @@ import LandscapeOutlinedIcon from '@mui/icons-material/LandscapeOutlined'
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined'
 import LogoutIcon from '@mui/icons-material/Logout'
 import MenuIcon from '@mui/icons-material/Menu'
+import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import { AppBar, Box, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
@@ -19,6 +20,10 @@ const navigation = [
   { label: 'Lotes', path: routePaths.lots, icon: <LandscapeOutlinedIcon /> },
   { label: 'Manzanas', path: routePaths.blocks, icon: <GridViewOutlinedIcon /> },
   { label: 'Plano de referencia', path: routePaths.referencePlan, icon: <MapOutlinedIcon /> },
+]
+
+const customerNavigation = [
+  { label: 'Clientes', path: routePaths.customers, icon: <PeopleAltOutlinedIcon /> },
 ]
 
 export function DashboardLayout() {
@@ -56,6 +61,19 @@ export function DashboardLayout() {
       </Box>
       <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
         {navigation.map((item) => {
+          const active = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+          const button = <ListItemButton component={RouterLink} to={item.path} selected={active} onClick={closeMobile} sx={{ minHeight: 46, justifyContent: collapsed && !isMobile ? 'center' : 'initial', px: collapsed && !isMobile ? 1.25 : 1.5, borderRadius: 1.5, mb: 0.5, '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '& .MuiListItemIcon-root': { color: 'inherit' } }, '&.Mui-selected:hover': { bgcolor: 'primary.dark' } }}>
+            <ListItemIcon sx={{ minWidth: collapsed && !isMobile ? 0 : 38, justifyContent: 'center', color: active ? 'inherit' : 'text.secondary' }}>{item.icon}</ListItemIcon>
+            {(!collapsed || isMobile) && <ListItemText primary={<Typography component="span" sx={{ fontWeight: active ? 700 : 500 }}>{item.label}</Typography>} />}
+          </ListItemButton>
+          return collapsed && !isMobile ? <Tooltip key={item.path} title={item.label} placement="right">{button}</Tooltip> : <Box key={item.path}>{button}</Box>
+        })}
+      </List>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 2, pb: 1 }}>
+        {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>CLIENTES</Typography>}
+      </Box>
+      <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
+        {customerNavigation.map((item) => {
           const active = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
           const button = <ListItemButton component={RouterLink} to={item.path} selected={active} onClick={closeMobile} sx={{ minHeight: 46, justifyContent: collapsed && !isMobile ? 'center' : 'initial', px: collapsed && !isMobile ? 1.25 : 1.5, borderRadius: 1.5, mb: 0.5, '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '& .MuiListItemIcon-root': { color: 'inherit' } }, '&.Mui-selected:hover': { bgcolor: 'primary.dark' } }}>
             <ListItemIcon sx={{ minWidth: collapsed && !isMobile ? 0 : 38, justifyContent: 'center', color: active ? 'inherit' : 'text.secondary' }}>{item.icon}</ListItemIcon>

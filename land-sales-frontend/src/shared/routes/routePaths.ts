@@ -3,5 +3,6 @@ export const routePaths = {
   dashboard: '/dashboard',
   lots: '/lotes',
   blocks: '/manzanas',
+  customers: '/clientes',
   referencePlan: '/plano',
 }

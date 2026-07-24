@@ -1,6 +1,7 @@
 import { Navigate, Route } from 'react-router-dom'
 import { LoginPage } from '../../features/auth'
 import { BlocksPage } from '../../features/blocks'
+import { CustomersPage } from '../../features/customers'
 import { DashboardPage } from '../../features/dashboard'
 import { LotsPage } from '../../features/lots'
 import { ReferencePlanPage } from '../../features/referencePlan'
@@ -20,6 +21,7 @@ export const routes = (
         <Route path={routePaths.dashboard} element={<DashboardPage />} />
         <Route path={routePaths.lots} element={<LotsPage />} />
         <Route path={routePaths.blocks} element={<BlocksPage />} />
+        <Route path={routePaths.customers} element={<CustomersPage />} />
         <Route path={routePaths.referencePlan} element={<ReferencePlanPage />} />
       </Route>
     </Route>

@@ -50,9 +50,7 @@ export function BlocksPage() {
   if (lotifications.length === 0) return <PageContainer><EmptyState title="Sin lotificaciones activas" description="No hay lotificaciones activas disponibles para consultar." /></PageContainer>
 
   const blocks = blocksQuery.data ?? []
-  const plannedLots = blocks.reduce((total, block) => total + block.plannedLotCount, 0)
   const registeredLots = blocks.reduce((total, block) => total + block.registeredLotCount, 0)
-  const pendingLots = Math.max(plannedLots - registeredLots, 0)
   const busy = mutations.create.isPending || mutations.update.isPending || mutations.remove.isPending
 
   async function refresh() {
@@ -104,7 +102,6 @@ export function BlocksPage() {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
           <Metric label="Total de manzanas" value={blocks.length} />
           <Metric label="Lotes registrados" value={registeredLots} />
-          <Metric label="Pendientes por registrar" value={pendingLots} />
         </Stack>
         {blocksQuery.isLoading ? <LoadingScreen message="Cargando manzanas..." /> : null}
         {blocksQuery.isError ? <Alert severity="error">No fue posible cargar las manzanas.</Alert> : null}

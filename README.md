@@ -97,6 +97,14 @@ The backend must be started manually from IntelliJ and available at `http://loca
 
 For pgAdmin, register the database connection with host `db`, port `5432`, database `DB_NAME`, username `DB_USER`, and password `DB_PASSWORD`.
 
-### Plano de referencia
+### Plano de referencia privado
 
-El PDF original se conserva en `docs/reference`. La copia pública utilizada por Vite está en `land-sales-frontend/public/reference`. Si se reemplaza el plano, deben actualizarse ambas copias. En un despliegue público futuro debe evaluarse servirlo mediante el backend autenticado.
+Los archivos del plano no se incluyen en el repositorio por privacidad. Para ejecutar la aplicación localmente, copia los recursos manualmente a `land-sales-frontend/public/reference/`.
+
+La aplicación espera actualmente estos archivos:
+
+- `plano-lotificacion.pdf`
+- `plano-lotificacion.webp`
+- `plano-lotificacion-recortado.webp`
+
+No agregues estos archivos a Git. El PDF original local se conserva en `docs/reference/`.
