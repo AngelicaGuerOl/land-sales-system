@@ -5,7 +5,7 @@ import { AuthMapper, type LoginResponseDto } from './mappers/AuthMapper'
 
 export class AuthRepositoryImpl implements AuthRepository {
   async login(credentials: LoginCredentials): Promise<AuthSession> {
-    const response = await httpClient.post<LoginResponseDto>('/auth/login', credentials)
+    const response = await httpClient.post<LoginResponseDto>('/auth/login', credentials, { skipAuth: true })
     return AuthMapper.toSession(response)
   }
 

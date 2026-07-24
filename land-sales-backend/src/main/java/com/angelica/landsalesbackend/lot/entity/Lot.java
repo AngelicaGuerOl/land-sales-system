@@ -171,6 +171,18 @@ public class Lot {
         this.locationReference = locationReference;
     }
 
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public Long getVersion() {
+        return version;
+    }
+
     public LotMapShape getMapShape() {
         return mapShape;
     }

@@ -1,4 +1,7 @@
 export const routePaths = {
   login: '/login',
-  lotMap: '/map',
+  dashboard: '/dashboard',
+  lots: '/lotes',
+  blocks: '/manzanas',
+  referencePlan: '/plano',
 }

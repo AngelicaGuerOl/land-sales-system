@@ -15,6 +15,8 @@ public record LotResponse(
         BigDecimal price,
         LotStatus status,
         String locationReference,
+        String notes,
+        Long version,
         String svgPath,
         BigDecimal labelX,
         BigDecimal labelY,

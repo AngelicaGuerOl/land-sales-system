@@ -5,9 +5,13 @@ import java.math.BigDecimal;
 public record BlockResponse(
         Long id,
         Long lotificationId,
+        String lotificationName,
         String code,
         BigDecimal areaM2,
-        Integer lotCount,
-        String referenceColor
+        Integer plannedLotCount,
+        Long registeredLotCount,
+        String notes,
+        java.time.OffsetDateTime createdAt,
+        java.time.OffsetDateTime updatedAt
 ) {
 }

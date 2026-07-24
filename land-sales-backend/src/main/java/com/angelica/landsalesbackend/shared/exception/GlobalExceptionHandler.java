@@ -1,9 +1,15 @@
 package com.angelica.landsalesbackend.shared.exception;
 
+import com.angelica.landsalesbackend.lot.exception.LotConflictException;
+import com.angelica.landsalesbackend.lot.exception.LotValidationException;
+import com.angelica.landsalesbackend.block.exception.BlockConflictException;
+import com.angelica.landsalesbackend.block.exception.BulkLotConflictException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
@@ -37,6 +43,28 @@ public class GlobalExceptionHandler {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
+    }
+
+    @ExceptionHandler(LotValidationException.class)
+    ResponseEntity<ApiErrorResponse> businessValidation(LotValidationException ex, HttpServletRequest request) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
+    }
+
+    @ExceptionHandler({
+            LotConflictException.class,
+            BlockConflictException.class,
+            BulkLotConflictException.class,
+            DataIntegrityViolationException.class,
+            OptimisticLockingFailureException.class
+    })
+    ResponseEntity<ApiErrorResponse> conflict(Exception ex, HttpServletRequest request) {
+        String message = ex instanceof LotConflictException || ex instanceof BlockConflictException || ex instanceof BulkLotConflictException
+                ? ex.getMessage()
+                : "The lot was changed by another request or conflicts with existing data";
+        Map<String, String> details = ex instanceof BulkLotConflictException bulk
+                ? Map.of("conflicts", String.join(", ", bulk.getConflicts()))
+                : null;
+        return error(HttpStatus.CONFLICT, message, request, details);
     }
 
     private ResponseEntity<ApiErrorResponse> error(

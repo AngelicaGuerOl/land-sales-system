@@ -12,8 +12,11 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
+import com.angelica.landsalesbackend.lot.entity.Lot;
 
 @Entity
 @Table(name = "blocks")
@@ -47,6 +50,9 @@ public class LandBlock {
 
     @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
+
+    @OneToMany(mappedBy = "block", fetch = FetchType.LAZY)
+    private List<Lot> lots;
 
     @PrePersist
     void prePersist() {
@@ -113,5 +119,21 @@ public class LandBlock {
 
     public void setReferenceColor(String referenceColor) {
         this.referenceColor = referenceColor;
+    }
+
+    public String getNotes() {
+        return notes;
+    }
+
+    public void setNotes(String notes) {
+        this.notes = notes;
+    }
+
+    public OffsetDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public OffsetDateTime getUpdatedAt() {
+        return updatedAt;
     }
 }

@@ -27,7 +27,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     onSuccess: (session) => {
       tokenStorage.setToken(session.tokenType, session.accessToken)
       queryClient.setQueryData(['auth', 'me'], session.user)
-      navigate(routePaths.lotMap, { replace: true })
+      navigate(routePaths.dashboard, { replace: true })
     },
   })
 
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     <AuthContext.Provider
       value={{
         user: currentUserQuery.data ?? null,
-        isLoadingUser: currentUserQuery.isLoading,
+        isLoadingUser: currentUserQuery.isPending || currentUserQuery.isFetching,
         login: async (credentials) => {
           await loginMutation.mutateAsync(credentials)
         },

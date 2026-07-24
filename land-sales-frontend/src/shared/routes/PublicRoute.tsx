@@ -4,7 +4,7 @@ import { routePaths } from './routePaths'
 
 export function PublicRoute() {
   if (tokenStorage.getToken()) {
-    return <Navigate to={routePaths.lotMap} replace />
+    return <Navigate to={routePaths.dashboard} replace />
   }
 
   return <Outlet />

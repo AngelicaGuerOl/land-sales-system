@@ -9,8 +9,8 @@ export function NotFoundPage() {
       <Stack spacing={2}>
         <Typography variant="h4">Página no encontrada</Typography>
         <Typography color="text.secondary">La ruta solicitada no existe.</Typography>
-        <Button component={RouterLink} to={routePaths.lotMap} variant="contained" sx={{ alignSelf: 'flex-start' }}>
-          Ir al mapa
+        <Button component={RouterLink} to={routePaths.lots} variant="contained" sx={{ alignSelf: 'flex-start' }}>
+          Ir a lotes
         </Button>
       </Stack>
     </PageContainer>

@@ -6,6 +6,6 @@ import org.springframework.stereotype.Component;
 public class LotMapper {
 
     public String normalizeSearch(String search) {
-        return search == null || search.isBlank() ? null : search.trim();
+        return search == null || search.isBlank() ? "" : search.trim();
     }
 }

@@ -96,3 +96,7 @@ Default URLs:
 The backend must be started manually from IntelliJ and available at `http://localhost:8080` for login and frontend `/api` requests to work. IntelliJ connects to PostgreSQL at `localhost:5434`. The browser calls `http://localhost:5173/api/...`; Vite forwards those requests to the backend at `http://localhost:8080`, avoiding CORS during development.
 
 For pgAdmin, register the database connection with host `db`, port `5432`, database `DB_NAME`, username `DB_USER`, and password `DB_PASSWORD`.
+
+### Plano de referencia
+
+El PDF original se conserva en `docs/reference`. La copia pública utilizada por Vite está en `land-sales-frontend/public/reference`. Si se reemplaza el plano, deben actualizarse ambas copias. En un despliegue público futuro debe evaluarse servirlo mediante el backend autenticado.

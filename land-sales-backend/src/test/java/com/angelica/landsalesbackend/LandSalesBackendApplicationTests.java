@@ -5,8 +5,13 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -16,6 +21,7 @@ import com.angelica.landsalesbackend.lot.entity.Lot;
 import com.angelica.landsalesbackend.lot.entity.LotMapShape;
 import com.angelica.landsalesbackend.lot.entity.LotStatus;
 import com.angelica.landsalesbackend.lot.repository.LotMapShapeRepository;
+import com.angelica.landsalesbackend.lot.repository.LotPriceHistoryRepository;
 import com.angelica.landsalesbackend.lot.repository.LotRepository;
 import com.angelica.landsalesbackend.lotification.entity.Lotification;
 import com.angelica.landsalesbackend.lotification.repository.LotificationRepository;
@@ -70,11 +76,15 @@ class LandSalesBackendApplicationTests {
     LotMapShapeRepository lotMapShapeRepository;
 
     @Autowired
+    LotPriceHistoryRepository lotPriceHistoryRepository;
+
+    @Autowired
     PasswordEncoder passwordEncoder;
 
     private Long lotificationId;
     private Long blockOneId;
     private Long lotOneId;
+    private Long soldLotId;
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {
@@ -91,6 +101,7 @@ class LandSalesBackendApplicationTests {
     @BeforeEach
     void setUp() {
         lotMapShapeRepository.deleteAll();
+        lotPriceHistoryRepository.deleteAll();
         lotRepository.deleteAll();
         blockRepository.deleteAll();
         lotificationRepository.deleteAll();
@@ -120,7 +131,8 @@ class LandSalesBackendApplicationTests {
         blockOneId = blockOne.getId();
 
         Lot lotTwo = lot(blockOne, "L-02", "MZA-01-L-02", LotStatus.SOLD);
-        lotRepository.save(lotTwo);
+        lotTwo = lotRepository.save(lotTwo);
+        soldLotId = lotTwo.getId();
 
         Lot lotOne = lot(blockOne, "L-01", "MZA-01-L-01", LotStatus.AVAILABLE);
         lotOne = lotRepository.save(lotOne);
@@ -149,6 +161,16 @@ class LandSalesBackendApplicationTests {
                 .andExpect(jsonPath("$.user.username").value("admin"))
                 .andExpect(content().string(not(containsString("passwordHash"))))
                 .andExpect(content().string(not(containsString("password_hash"))));
+    }
+
+    @Test
+    void loginPreflightAllowsViteOrigin() throws Exception {
+        mockMvc.perform(options("/api/auth/login")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"));
     }
 
     @Test
@@ -217,6 +239,146 @@ class LandSalesBackendApplicationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].code").value("MZA-01-L-01"));
+
+        mockMvc.perform(get("/api/lots")
+                        .param("lotificationId", lotificationId.toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)));
+    }
+
+    @Test
+    void managesBlocksAndCountsRegisteredLots() throws Exception {
+        mockMvc.perform(get("/api/blocks")
+                        .param("lotificationId", lotificationId.toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].lotificationName").value("Lotificacion Norte"))
+                .andExpect(jsonPath("$[0].plannedLotCount").value(2))
+                .andExpect(jsonPath("$[0].registeredLotCount").value(2));
+
+        MvcResult created = mockMvc.perform(post("/api/blocks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "lotificationId", lotificationId,
+                                "code", "mza-09",
+                                "areaM2", new BigDecimal("900.00"),
+                                "plannedLotCount", 9,
+                                "notes", "Nueva manzana"
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("MZA-09"))
+                .andExpect(jsonPath("$.registeredLotCount").value(0))
+                .andReturn();
+        long createdId = objectMapper.readTree(created.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(put("/api/blocks/{id}", createdId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "lotificationId", lotificationId,
+                                "code", "MZA-10",
+                                "areaM2", new BigDecimal("950.00"),
+                                "plannedLotCount", 10,
+                                "notes", "Actualizada"
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("MZA-10"));
+
+        mockMvc.perform(delete("/api/blocks/{id}", createdId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void preventsChangingOrDeletingBlockWithLots() throws Exception {
+        mockMvc.perform(put("/api/blocks/{id}", blockOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "lotificationId", lotificationId,
+                                "code", "MZA-99",
+                                "areaM2", new BigDecimal("1000.00"),
+                                "plannedLotCount", 5,
+                                "notes", "No debe cambiar código"
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(delete("/api/blocks/{id}", blockOneId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void generatesFortyLotsWithExpectedFormatAndAvailableStatus() throws Exception {
+        MvcResult blockResult = mockMvc.perform(post("/api/blocks")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "lotificationId", lotificationId,
+                                "code", "MZA-40",
+                                "areaM2", new BigDecimal("4000.00"),
+                                "plannedLotCount", 40
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isCreated())
+                .andReturn();
+        long blockId = objectMapper.readTree(blockResult.getResponse().getContentAsString()).get("id").asLong();
+
+        mockMvc.perform(post("/api/blocks/{blockId}/lots/bulk", blockId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "startNumber", 1,
+                                "endNumber", 40,
+                                "numberPrefix", "L-",
+                                "numberPadding", 2,
+                                "areaM2", new BigDecimal("100.00"),
+                                "frontMeters", new BigDecimal("5.00"),
+                                "depthMeters", new BigDecimal("20.00"),
+                                "currentPrice", new BigDecimal("100000.00")
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.requestedCount").value(40))
+                .andExpect(jsonPath("$.createdCount").value(40))
+                .andExpect(jsonPath("$.createdLots", hasSize(40)))
+                .andExpect(jsonPath("$.createdLots[0].lotNumber").value("L-01"))
+                .andExpect(jsonPath("$.createdLots[0].code").value("MZA-40-L-01"))
+                .andExpect(jsonPath("$.createdLots[0].status").value("AVAILABLE"))
+                .andExpect(jsonPath("$.createdLots[39].lotNumber").value("L-40"))
+                .andExpect(jsonPath("$.createdLots[39].code").value("MZA-40-L-40"));
+    }
+
+    @Test
+    void rejectsInvalidBulkRangeAndDoesNotInsertOnConflict() throws Exception {
+        mockMvc.perform(post("/api/blocks/{blockId}/lots/bulk", blockOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "startNumber", 2,
+                                "endNumber", 1,
+                                "numberPrefix", "L-",
+                                "numberPadding", 2
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post("/api/blocks/{blockId}/lots/bulk", blockOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "startNumber", 1,
+                                "endNumber", 2,
+                                "numberPrefix", "L-",
+                                "numberPadding", 2
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.validationErrors.conflicts").value(containsString("L-01")));
+
+        mockMvc.perform(get("/api/lots")
+                        .param("blockId", blockOneId.toString())
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)));
     }
 
     @Test
@@ -228,6 +390,140 @@ class LandSalesBackendApplicationTests {
 
         mockMvc.perform(get("/api/lots/{id}", 999999L).header(HttpHeaders.AUTHORIZATION, bearerToken()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createsLotWithGeneratedCodeAndAvailableStatus() throws Exception {
+        mockMvc.perform(post("/api/lots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "blockId", blockOneId,
+                                "lotNumber", "L-09",
+                                "areaM2", new BigDecimal("210.00"),
+                                "frontMeters", new BigDecimal("10.00"),
+                                "depthMeters", new BigDecimal("21.00"),
+                                "currentPrice", new BigDecimal("230000.00"),
+                                "locationReference", "East side",
+                                "notes", "New lot"
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.code").value("MZA-01-L-09"))
+                .andExpect(jsonPath("$.status").value("AVAILABLE"));
+    }
+
+    @Test
+    void rejectsMissingBlockAndDuplicateLotNumber() throws Exception {
+        mockMvc.perform(post("/api/lots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("blockId", 999999L, "lotNumber", "L-09")))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(post("/api/lots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("blockId", blockOneId, "lotNumber", "L-01")))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post("/api/lots")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of(
+                                "blockId", blockOneId,
+                                "lotNumber", "L-10",
+                                "areaM2", new BigDecimal("-1.00")
+                        )))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void editsAvailableLotAndRegeneratesCode() throws Exception {
+        mockMvc.perform(put("/api/lots/{id}", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockTwoId(), "L-11", lotVersion(lotOneId), "120000.00", null)))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("MZA-02-L-11"));
+    }
+
+    @Test
+    void soldLotOnlyAllowsLocationAndNotes() throws Exception {
+        mockMvc.perform(put("/api/lots/{id}", soldLotId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockOneId, "L-02", lotVersion(soldLotId), "130000.00", null)))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void blocksAndUnblocksLotAndRejectsManualSold() throws Exception {
+        mockMvc.perform(patch("/api/lots/{id}/status", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("status", "BLOCKED", "version", lotVersion(lotOneId))))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("BLOCKED"));
+
+        long blockedVersion = lotVersion(lotOneId);
+        mockMvc.perform(patch("/api/lots/{id}/status", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("status", "AVAILABLE", "version", blockedVersion)))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AVAILABLE"));
+
+        mockMvc.perform(patch("/api/lots/{id}/status", soldLotId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("status", "BLOCKED", "version", lotVersion(soldLotId))))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(patch("/api/lots/{id}/status", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("status", "SOLD", "version", lotVersion(lotOneId))))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void recordsPriceChangesOnlyWithReasonAndDetectsVersionConflict() throws Exception {
+        mockMvc.perform(put("/api/lots/{id}", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockOneId, "L-01", lotVersion(lotOneId), "120000.00", null)))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/lots/{id}/price-history", lotOneId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        long currentVersion = lotVersion(lotOneId);
+        mockMvc.perform(put("/api/lots/{id}", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockOneId, "L-01", currentVersion, "121000.00", null)))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(put("/api/lots/{id}", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockOneId, "L-01", currentVersion, "121000.00", "Updated market price")))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/lots/{id}/price-history", lotOneId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].reason").value("Updated market price"))
+                .andExpect(jsonPath("$[0].changedBy").value("admin"));
+
+        mockMvc.perform(put("/api/lots/{id}", lotOneId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(updatePayload(blockOneId, "L-01", currentVersion, "122000.00", "Stale update")))
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken()))
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -281,6 +577,39 @@ class LandSalesBackendApplicationTests {
         block.setLotCount(2);
         block.setReferenceColor(referenceColor);
         return block;
+    }
+
+    private Long blockTwoId() {
+        return blockRepository.findAll().stream()
+                .filter(block -> "MZA-02".equals(block.getCode()))
+                .findFirst()
+                .orElseThrow()
+                .getId();
+    }
+
+    private Long lotVersion(Long id) {
+        return lotRepository.findById(id).orElseThrow().getVersion();
+    }
+
+    private Map<String, Object> updatePayload(
+            Long blockId,
+            String lotNumber,
+            Long version,
+            String currentPrice,
+            String priceChangeReason
+    ) {
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("blockId", blockId);
+        payload.put("lotNumber", lotNumber);
+        payload.put("areaM2", new BigDecimal("105.00"));
+        payload.put("frontMeters", new BigDecimal("7.00"));
+        payload.put("depthMeters", new BigDecimal("15.00"));
+        payload.put("currentPrice", new BigDecimal(currentPrice));
+        payload.put("locationReference", "Updated side");
+        payload.put("notes", "Updated notes");
+        payload.put("version", version);
+        payload.put("priceChangeReason", priceChangeReason);
+        return payload;
     }
 
     private Lot lot(LandBlock block, String lotNumber, String code, LotStatus status) {

@@ -5,12 +5,27 @@ import com.angelica.landsalesbackend.lot.entity.Lot;
 import com.angelica.landsalesbackend.lot.entity.LotStatus;
 import com.angelica.landsalesbackend.lotification.dto.MapLotResponse;
 import java.util.List;
+import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface LotRepository extends JpaRepository<Lot, Long> {
+
+    long countByBlock_Id(Long blockId);
+
+    List<Lot> findByBlock_IdAndLotNumberIn(Long blockId, Collection<String> lotNumbers);
+
+    List<Lot> findByCodeIn(Collection<String> codes);
+
+    boolean existsByBlock_IdAndLotNumber(Long blockId, String lotNumber);
+
+    boolean existsByBlock_IdAndLotNumberAndIdNot(Long blockId, String lotNumber, Long id);
+
+    boolean existsByCode(String code);
+
+    boolean existsByCodeAndIdNot(String code, Long id);
 
     @Query("""
             select new com.angelica.landsalesbackend.lot.dto.LotResponse(
@@ -25,6 +40,8 @@ public interface LotRepository extends JpaRepository<Lot, Long> {
                 l.currentPrice,
                 l.status,
                 l.locationReference,
+                l.notes,
+                l.version,
                 s.svgPath,
                 s.labelX,
                 s.labelY,
@@ -37,7 +54,7 @@ public interface LotRepository extends JpaRepository<Lot, Long> {
               and (:blockId is null or b.id = :blockId)
               and (:status is null or l.status = :status)
               and (
-                    :search is null
+                    :search = ''
                     or lower(l.code) like lower(concat('%', :search, '%'))
                     or lower(l.lotNumber) like lower(concat('%', :search, '%'))
               )
@@ -63,6 +80,8 @@ public interface LotRepository extends JpaRepository<Lot, Long> {
                 l.currentPrice,
                 l.status,
                 l.locationReference,
+                l.notes,
+                l.version,
                 s.svgPath,
                 s.labelX,
                 s.labelY,

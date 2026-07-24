@@ -1,6 +1,9 @@
 import { Navigate, Route } from 'react-router-dom'
 import { LoginPage } from '../../features/auth'
-import { LotMapPage } from '../../features/lotMap'
+import { BlocksPage } from '../../features/blocks'
+import { DashboardPage } from '../../features/dashboard'
+import { LotsPage } from '../../features/lots'
+import { ReferencePlanPage } from '../../features/referencePlan'
 import { ProtectedRoute } from '../../shared/routes/ProtectedRoute'
 import { PublicRoute } from '../../shared/routes/PublicRoute'
 import { routePaths } from '../../shared/routes/routePaths'
@@ -14,10 +17,13 @@ export const routes = (
     </Route>
     <Route element={<ProtectedRoute />}>
       <Route element={<DashboardLayout />}>
-        <Route path={routePaths.lotMap} element={<LotMapPage />} />
+        <Route path={routePaths.dashboard} element={<DashboardPage />} />
+        <Route path={routePaths.lots} element={<LotsPage />} />
+        <Route path={routePaths.blocks} element={<BlocksPage />} />
+        <Route path={routePaths.referencePlan} element={<ReferencePlanPage />} />
       </Route>
     </Route>
-    <Route path="/" element={<Navigate to={routePaths.lotMap} replace />} />
+    <Route path="/" element={<Navigate to={routePaths.dashboard} replace />} />
     <Route path="*" element={<NotFoundPage />} />
   </>
 )
