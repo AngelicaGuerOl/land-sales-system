@@ -6,8 +6,9 @@ dist/
 .idea/
 *.iml
 
-# Private reference documents
-docs/reference/*.pdf
+# Private reference documents and local frontend copies
+docs/reference/
+land-sales-frontend/public/reference/
 
 # Windows downloaded-file metadata
 *:Zone.Identifier
