@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:${DB_PORT:5434}/${DB_NAME:land_sales_db}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:land_sales_user}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:change_me}}
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: debug
