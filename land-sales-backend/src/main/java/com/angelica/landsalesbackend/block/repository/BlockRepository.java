@@ -10,21 +10,22 @@ import org.springframework.data.repository.query.Param;
 
 public interface BlockRepository extends JpaRepository<LandBlock, Long> {
 
-    @Query("select count(b) > 0 from LandBlock b where b.lotification.id = :lotificationId and upper(b.code) = :code")
-    boolean existsByLotification_IdAndCode(@Param("lotificationId") Long lotificationId, @Param("code") String code);
+    @Query("select count(b) > 0 from LandBlock b where upper(b.code) = :code")
+    boolean existsByCode(@Param("code") String code);
 
-    @Query("select count(b) > 0 from LandBlock b where b.lotification.id = :lotificationId and upper(b.code) = :code and b.id <> :id")
-    boolean existsByLotification_IdAndCodeAndIdNot(@Param("lotificationId") Long lotificationId, @Param("code") String code, @Param("id") Long id);
+    @Query("select count(b) > 0 from LandBlock b where upper(b.code) = :code and b.id <> :id")
+    boolean existsByCodeAndIdNot(@Param("code") String code, @Param("id") Long id);
 
     @Query("""
             select new com.angelica.landsalesbackend.block.dto.BlockResponse(
-                b.id, b.lotification.id, b.lotification.name, b.code, b.areaM2,
+                b.id, lotification.id, lotification.name, b.code, b.areaM2,
                 b.lotCount, count(l.id), b.notes, b.createdAt, b.updatedAt
             )
             from LandBlock b
+            left join b.lotification lotification
             left join b.lots l
-            where (:lotificationId is null or b.lotification.id = :lotificationId)
-            group by b.id, b.lotification.id, b.lotification.name, b.code, b.areaM2,
+            where (:lotificationId is null or lotification.id = :lotificationId)
+            group by b.id, lotification.id, lotification.name, b.code, b.areaM2,
                      b.lotCount, b.notes, b.createdAt, b.updatedAt
             order by b.code asc
             """)
@@ -32,13 +33,14 @@ public interface BlockRepository extends JpaRepository<LandBlock, Long> {
 
     @Query("""
             select new com.angelica.landsalesbackend.block.dto.BlockResponse(
-                b.id, b.lotification.id, b.lotification.name, b.code, b.areaM2,
+                b.id, lotification.id, lotification.name, b.code, b.areaM2,
                 b.lotCount, count(l.id), b.notes, b.createdAt, b.updatedAt
             )
             from LandBlock b
+            left join b.lotification lotification
             left join b.lots l
             where b.id = :id
-            group by b.id, b.lotification.id, b.lotification.name, b.code, b.areaM2,
+            group by b.id, lotification.id, lotification.name, b.code, b.areaM2,
                      b.lotCount, b.notes, b.createdAt, b.updatedAt
             """)
     java.util.Optional<BlockResponse> findBlockResponseById(@Param("id") Long id);

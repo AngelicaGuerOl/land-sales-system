@@ -55,8 +55,9 @@ public interface LotRepository extends JpaRepository<Lot, Long> {
             )
             from Lot l
             join l.block b
+            left join b.lotification lotification
             left join l.mapShape s
-            where (:lotificationId is null or b.lotification.id = :lotificationId)
+            where (:lotificationId is null or lotification.id = :lotificationId)
               and (:blockId is null or b.id = :blockId)
               and (:status is null or l.status = :status)
               and (

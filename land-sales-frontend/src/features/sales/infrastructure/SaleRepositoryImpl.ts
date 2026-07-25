@@ -10,8 +10,20 @@ type CustomerPageDto = { content: SaleCustomerOption[] }
 export class SaleRepositoryImpl implements SaleRepository {
   async getCustomers(search: string) { const params = new URLSearchParams({ page: '0', size: '20', active: 'true' }); if (search.trim()) params.set('search', search.trim()); const page = await httpClient.get<CustomerPageDto>(`/customers?${params}`); return page.content }
   async getLotifications() { return httpClient.get<LotificationDto[]>('/lotifications') }
-  async getBlocks(lotificationId: number) { return httpClient.get<BlockDto[]>(`/blocks?lotificationId=${lotificationId}`) }
-  async getAvailableLots(lotificationId: number, blockId?: number, search?: string) { const params = new URLSearchParams({ lotificationId: String(lotificationId), status: 'AVAILABLE' }); if (blockId !== undefined) params.set('blockId', String(blockId)); if (search?.trim()) params.set('search', search.trim()); const lots = await httpClient.get<LotDto[]>(`/lots?${params}`); return lots.map(({ id, code, blockCode, lotNumber, areaM2, frontMeters, depthMeters, price }) => ({ id, code, blockCode, lotNumber, areaM2, frontMeters, depthMeters, price })) }
+  async getBlocks(lotificationId?: number) {
+    const params = new URLSearchParams()
+    if (lotificationId !== undefined) params.set('lotificationId', String(lotificationId))
+    const query = params.toString()
+    return httpClient.get<BlockDto[]>(query ? `/blocks?${query}` : '/blocks')
+  }
+  async getAvailableLots(lotificationId?: number, blockId?: number, search?: string) {
+    const params = new URLSearchParams({ status: 'AVAILABLE' })
+    if (lotificationId !== undefined) params.set('lotificationId', String(lotificationId))
+    if (blockId !== undefined) params.set('blockId', String(blockId))
+    if (search?.trim()) params.set('search', search.trim())
+    const lots = await httpClient.get<LotDto[]>(`/lots?${params}`)
+    return lots.map(({ id, code, blockCode, lotNumber, areaM2, frontMeters, depthMeters, price }) => ({ id, code, blockCode, lotNumber, areaM2, frontMeters, depthMeters, price }))
+  }
   create(input: CreateSaleInput) { return httpClient.post<SaleDetail>('/sales', input) }
   async getSales(query: SalesQuery) { const params = new URLSearchParams({ page: String(query.page), size: String(query.size) }); if (query.search?.trim()) params.set('search', query.search.trim()); if (query.status) params.set('status', query.status); if (query.dateFrom) params.set('dateFrom', query.dateFrom); if (query.dateTo) params.set('dateTo', query.dateTo); return httpClient.get<SalePage>(`/sales?${params}`) }
   getSale(id: number) { return httpClient.get<SaleDetail>(`/sales/${id}`) }

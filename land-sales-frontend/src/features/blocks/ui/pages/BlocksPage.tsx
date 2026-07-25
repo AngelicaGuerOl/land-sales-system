@@ -1,5 +1,5 @@
 import AddIcon from '@mui/icons-material/Add'
-import { Alert, Button, Card, CardContent, MenuItem, Select, Snackbar, Stack, Typography } from '@mui/material'
+import { Alert, Button, Card, CardContent, Snackbar, Stack, Typography } from '@mui/material'
 import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,7 +10,6 @@ import { PageContainer } from '../../../../shared/ui/layout/PageContainer'
 import type { BlockFormInput, LandBlock } from '../../domain/entities/LandBlock'
 import { useBlockMutations } from '../hooks/useBlockMutations'
 import { useBlocks } from '../hooks/useBlocks'
-import { useLotifications } from '../hooks/useLotifications'
 import { ConfirmDialog } from '../../../../shared/ui/components/ConfirmDialog'
 import { BlockFormDialog } from '../components/BlockFormDialog'
 import { BulkLotDialog } from '../components/BulkLotDialog'
@@ -33,21 +32,13 @@ function errorMessage(error: unknown) {
 export function BlocksPage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const lotificationsQuery = useLotifications()
-  const lotifications = (lotificationsQuery.data ?? []).filter((lotification) => lotification.active)
-  const [selectedLotificationId, setSelectedLotificationId] = useState<number | null>(null)
   const [formBlock, setFormBlock] = useState<LandBlock | null | undefined>(undefined)
   const [deleteBlock, setDeleteBlock] = useState<LandBlock | null>(null)
   const [bulkBlock, setBulkBlock] = useState<LandBlock | null>(null)
   const [feedback, setFeedback] = useState<Feedback | null>(null)
-  const activeLotificationId = selectedLotificationId ?? lotifications[0]?.id ?? null
-  const blocksQuery = useBlocks(activeLotificationId)
+  const blocksQuery = useBlocks(null)
   const mutations = useBlockMutations()
   const bulkMutation = useBulkLotMutation()
-
-  if (lotificationsQuery.isLoading) return <LoadingScreen message="Cargando lotificaciones..." />
-  if (lotificationsQuery.isError) return <PageContainer><Alert severity="error">No fue posible cargar las lotificaciones.</Alert></PageContainer>
-  if (lotifications.length === 0) return <PageContainer><EmptyState title="Sin lotificaciones activas" description="No hay lotificaciones activas disponibles para consultar." /></PageContainer>
 
   const blocks = blocksQuery.data ?? []
   const registeredLots = blocks.reduce((total, block) => total + block.registeredLotCount, 0)
@@ -95,7 +86,6 @@ export function BlocksPage() {
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ justifyContent: 'space-between', alignItems: { sm: 'center' } }}>
           <Stack spacing={0.5}><Typography variant="h4" sx={{ fontWeight: 700 }}>Manzanas</Typography><Typography color="text.secondary">Administra la distribución y capacidad de cada manzana.</Typography></Stack>
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            {lotifications.length > 1 ? <Select size="small" value={activeLotificationId ?? ''} onChange={(event) => setSelectedLotificationId(Number(event.target.value))} aria-label="Lotificación" sx={{ minWidth: 220 }}>{lotifications.map((item) => <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>)}</Select> : null}
             <Button variant="contained" startIcon={<AddIcon />} onClick={() => setFormBlock(null)}>Registrar manzana</Button>
           </Stack>
         </Stack>
@@ -106,9 +96,9 @@ export function BlocksPage() {
         {blocksQuery.isLoading ? <LoadingScreen message="Cargando manzanas..." /> : null}
         {blocksQuery.isError ? <Alert severity="error">No fue posible cargar las manzanas.</Alert> : null}
         {!blocksQuery.isLoading && !blocksQuery.isError && blocks.length === 0 ? <EmptyState title="Sin manzanas" description="Registra la primera manzana de esta lotificación." /> : null}
-        {!blocksQuery.isLoading && !blocksQuery.isError && blocks.length > 0 ? <BlocksTable blocks={blocks} onViewLots={(block) => navigate(`/lotes?lotificationId=${block.lotificationId}&blockId=${block.id}`)} onEdit={(block) => setFormBlock(block)} onDelete={(block) => setDeleteBlock(block)} onGenerate={(block) => setBulkBlock(block)} /> : null}
+        {!blocksQuery.isLoading && !blocksQuery.isError ? <BlocksTable blocks={blocks} onViewLots={(block) => navigate(`/lotes?blockId=${block.id}`)} onEdit={(block) => setFormBlock(block)} onDelete={(block) => setDeleteBlock(block)} onGenerate={(block) => setBulkBlock(block)} /> : null}
       </Stack>
-      <BlockFormDialog key={`${formBlock?.id ?? 'new'}-${formBlock !== undefined}`} open={formBlock !== undefined} block={formBlock ?? null} defaultLotificationId={activeLotificationId} pending={busy} onClose={() => setFormBlock(undefined)} onSubmit={saveBlock} />
+      <BlockFormDialog key={`${formBlock?.id ?? 'new'}-${formBlock !== undefined}`} open={formBlock !== undefined} block={formBlock ?? null} pending={busy} onClose={() => setFormBlock(undefined)} onSubmit={saveBlock} />
       <BulkLotDialog open={bulkBlock !== null} block={bulkBlock} pending={bulkMutation.isPending} onClose={() => setBulkBlock(null)} onSubmit={generateLots} />
       <ConfirmDialog open={deleteBlock !== null} title="Eliminar manzana" description={deleteBlock ? `¿Confirmas eliminar la manzana ${deleteBlock.code}?` : ''} confirmLabel="Eliminar" pending={mutations.remove.isPending} onClose={() => setDeleteBlock(null)} onConfirm={removeBlock} />
       <Snackbar open={feedback !== null} autoHideDuration={5000} onClose={() => setFeedback(null)}><Alert severity={feedback?.severity ?? 'success'} onClose={() => setFeedback(null)} sx={{ width: '100%' }}>{feedback?.message}</Alert></Snackbar>

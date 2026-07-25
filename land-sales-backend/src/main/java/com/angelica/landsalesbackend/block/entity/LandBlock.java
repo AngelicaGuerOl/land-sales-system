@@ -26,8 +26,8 @@ public class LandBlock {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "lotification_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lotification_id")
     private Lotification lotification;
 
     @Column(nullable = false, length = 50)

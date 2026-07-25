@@ -125,7 +125,7 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
           >
             <MenuItem value="">Selecciona una manzana</MenuItem>
             {blocks.map((block) => (
-              <MenuItem key={block.id} value={block.id}>
+              <MenuItem key={block.id} value={String(block.id)}>
                 {block.code}
               </MenuItem>
             ))}

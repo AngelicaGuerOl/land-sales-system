@@ -14,9 +14,6 @@ import com.angelica.landsalesbackend.lot.repository.LotRepository;
 import com.angelica.landsalesbackend.lot.dto.LotResponse;
 import com.angelica.landsalesbackend.lot.entity.Lot;
 import com.angelica.landsalesbackend.lot.entity.LotStatus;
-import com.angelica.landsalesbackend.lotification.entity.Lotification;
-import com.angelica.landsalesbackend.lotification.exception.LotificationNotFoundException;
-import com.angelica.landsalesbackend.lotification.repository.LotificationRepository;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -27,12 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 public class BlockServiceImpl implements BlockService {
 
     private final BlockRepository blockRepository;
-    private final LotificationRepository lotificationRepository;
     private final LotRepository lotRepository;
 
-    public BlockServiceImpl(BlockRepository blockRepository, LotificationRepository lotificationRepository, LotRepository lotRepository) {
+    public BlockServiceImpl(BlockRepository blockRepository, LotRepository lotRepository) {
         this.blockRepository = blockRepository;
-        this.lotificationRepository = lotificationRepository;
         this.lotRepository = lotRepository;
     }
 
@@ -51,11 +46,9 @@ public class BlockServiceImpl implements BlockService {
     @Override
     @Transactional
     public BlockResponse createBlock(CreateBlockRequest request) {
-        Lotification lotification = findLotification(request.lotificationId());
         String code = normalizeCode(request.code());
-        ensureUnique(lotification.getId(), code, null);
+        ensureUnique(code, null);
         LandBlock block = new LandBlock();
-        block.setLotification(lotification);
         block.setCode(code);
         block.setAreaM2(request.areaM2());
         block.setLotCount(request.plannedLotCount());
@@ -68,14 +61,12 @@ public class BlockServiceImpl implements BlockService {
     @Transactional
     public BlockResponse updateBlock(Long id, UpdateBlockRequest request) {
         LandBlock block = blockRepository.findById(id).orElseThrow(BlockNotFoundException::new);
-        Lotification lotification = findLotification(request.lotificationId());
         String code = normalizeCode(request.code());
         long registered = lotRepository.countByBlock_Id(id);
-        if (registered > 0 && (!block.getLotification().getId().equals(lotification.getId()) || !block.getCode().equals(code))) {
-            throw new BlockConflictException("A block with lots cannot change its lotification or code");
+        if (registered > 0 && !block.getCode().equals(code)) {
+            throw new BlockConflictException("A block with lots cannot change its code");
         }
-        ensureUnique(lotification.getId(), code, id);
-        block.setLotification(lotification);
+        ensureUnique(code, id);
         block.setCode(code);
         block.setAreaM2(request.areaM2());
         block.setLotCount(request.plannedLotCount());
@@ -143,15 +134,11 @@ public class BlockServiceImpl implements BlockService {
         return new BulkLotResponse(block.getId(), block.getCode(), lots.size(), lots.size(), createdLots);
     }
 
-    private Lotification findLotification(Long id) {
-        return lotificationRepository.findById(id).orElseThrow(LotificationNotFoundException::new);
-    }
-
-    private void ensureUnique(Long lotificationId, String code, Long currentId) {
+    private void ensureUnique(String code, Long currentId) {
         boolean duplicate = currentId == null
-                ? blockRepository.existsByLotification_IdAndCode(lotificationId, code)
-                : blockRepository.existsByLotification_IdAndCodeAndIdNot(lotificationId, code, currentId);
-        if (duplicate) throw new BlockConflictException("The block code already exists in this lotification");
+                ? blockRepository.existsByCode(code)
+                : blockRepository.existsByCodeAndIdNot(code, currentId);
+        if (duplicate) throw new BlockConflictException("The block code already exists");
     }
 
     private String normalizeCode(String code) {

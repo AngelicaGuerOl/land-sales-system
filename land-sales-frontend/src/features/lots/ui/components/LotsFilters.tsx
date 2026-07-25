@@ -2,10 +2,8 @@ import { FormControl, InputLabel, MenuItem, Select, Stack, TextField } from '@mu
 import type { SelectChangeEvent } from '@mui/material/Select'
 import type { LotBlockOption } from '../../domain/entities/Lot'
 import { lotStatuses, type LotStatus } from '../../domain/entities/Lot'
-import type { Lotification } from '../../domain/entities/Lotification'
 
 export type LotsFiltersValue = {
-  lotificationId: number | ''
   search: string
   blockId: number | ''
   status: LotStatus | ''
@@ -13,36 +11,18 @@ export type LotsFiltersValue = {
 
 type LotsFiltersProps = {
   blocks: LotBlockOption[]
-  lotifications: Lotification[]
   value: LotsFiltersValue
   onChange(value: LotsFiltersValue): void
   showLotification?: boolean
 }
 
-export function LotsFilters({ blocks, lotifications, value, onChange, showLotification = true }: LotsFiltersProps) {
+export function LotsFilters({ blocks, value, onChange }: LotsFiltersProps) {
   function update(next: Partial<LotsFiltersValue>) {
     onChange({ ...value, ...next })
   }
 
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25} sx={{ alignItems: { md: 'center' } }}>
-      {showLotification ? <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 }, flex: { md: '0 0 220px' } }}>
-        <InputLabel id="lotification-label">Lotificación</InputLabel>
-        <Select
-          labelId="lotification-label"
-          label="Lotificación"
-          value={value.lotificationId === '' ? '' : String(value.lotificationId)}
-          onChange={(event: SelectChangeEvent) =>
-            update({ lotificationId: event.target.value === '' ? '' : Number(event.target.value), blockId: '' })
-          }
-        >
-          {lotifications.map((lotification) => (
-            <MenuItem key={lotification.id} value={lotification.id}>
-              {lotification.name}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl> : null}
       <TextField
         label="Código o número"
         placeholder="Código o número"

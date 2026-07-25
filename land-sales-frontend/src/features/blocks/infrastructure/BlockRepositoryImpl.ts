@@ -10,8 +10,8 @@ export class BlockRepositoryImpl implements BlockRepository {
     return response.map(BlockMapper.toLotification)
   }
 
-  async getBlocks(lotificationId: number): Promise<LandBlock[]> {
-    const response = await httpClient.get<BlockDto[]>(`/blocks?lotificationId=${lotificationId}`)
+  async getBlocks(lotificationId?: number): Promise<LandBlock[]> {
+    const response = await httpClient.get<BlockDto[]>(lotificationId === undefined ? '/blocks' : `/blocks?lotificationId=${lotificationId}`)
     return response.map(BlockMapper.toBlock)
   }
 

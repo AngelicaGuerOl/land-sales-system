@@ -12,13 +12,14 @@ export class LotRepositoryImpl implements LotRepository {
     return response.map(LotMapper.toLotification)
   }
 
-  async getBlocks(lotificationId: number): Promise<LotBlockOption[]> {
-    const response = await httpClient.get<BlockDto[]>(`/blocks?lotificationId=${lotificationId}`)
+  async getBlocks(lotificationId?: number): Promise<LotBlockOption[]> {
+    const response = await httpClient.get<BlockDto[]>(lotificationId === undefined ? '/blocks' : `/blocks?lotificationId=${lotificationId}`)
     return response.map(LotMapper.toBlock)
   }
 
   async getLots(query: LotQuery): Promise<Lot[]> {
-    const params = new URLSearchParams({ lotificationId: String(query.lotificationId) })
+    const params = new URLSearchParams()
+    if (query.lotificationId !== undefined) params.set('lotificationId', String(query.lotificationId))
     if (query.blockId !== undefined) params.set('blockId', String(query.blockId))
     if (query.status !== undefined) params.set('status', query.status)
     if (query.search?.trim()) params.set('search', query.search.trim())

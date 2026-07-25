@@ -53,7 +53,14 @@ public class AccountStatementServiceImpl implements AccountStatementService {
 
     private AccountStatementResponse.SaleInfo toSale(Sale sale) {
         List<AccountStatementResponse.LotInfo> lots = sale.getSaleLots().stream().sorted(Comparator.comparing((SaleLot sl) -> sl.getLot().getCode())).map(this::toLot).toList();
-        return new AccountStatementResponse.SaleInfo(sale.getId(), sale.getFolio(), sale.getSaleDate(), lots);
+        return new AccountStatementResponse.SaleInfo(sale.getId(), displayFolio(sale.getFolio()), sale.getSaleDate(), lots);
+    }
+
+    private String displayFolio(String folio) {
+        if (folio != null && folio.matches("VTA-\\d{4}-\\d+")) {
+            return folio.substring(folio.lastIndexOf('-') + 1).replaceFirst("^0+(?!$)", "");
+        }
+        return folio;
     }
 
     private AccountStatementResponse.LotInfo toLot(SaleLot lot) {

@@ -1,7 +1,7 @@
 export type LandBlock = {
   id: number
-  lotificationId: number
-  lotificationName: string
+  lotificationId: number | null
+  lotificationName: string | null
   code: string
   areaM2: number | null
   plannedLotCount: number
@@ -12,7 +12,6 @@ export type LandBlock = {
 }
 
 export type BlockFormInput = {
-  lotificationId: number
   code: string
   areaM2: number | null
   plannedLotCount: number

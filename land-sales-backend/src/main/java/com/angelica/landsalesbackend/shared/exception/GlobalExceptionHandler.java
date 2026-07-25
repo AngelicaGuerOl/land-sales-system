@@ -8,6 +8,7 @@ import com.angelica.landsalesbackend.sale.exception.SaleConflictException;
 import com.angelica.landsalesbackend.sale.exception.SaleValidationException;
 import com.angelica.landsalesbackend.payment.exception.PaymentConflictException;
 import com.angelica.landsalesbackend.payment.exception.PaymentValidationException;
+import com.angelica.landsalesbackend.report.exception.ReportValidationException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
     }
 
-    @ExceptionHandler({LotValidationException.class, SaleValidationException.class, PaymentValidationException.class})
+    @ExceptionHandler({LotValidationException.class, SaleValidationException.class, PaymentValidationException.class, ReportValidationException.class})
     ResponseEntity<ApiErrorResponse> businessValidation(Exception ex, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
     }

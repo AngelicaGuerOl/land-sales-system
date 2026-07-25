@@ -58,7 +58,7 @@ public class SaleServiceImpl implements SaleService {
         }
 
         Sale sale = new Sale();
-        sale.setFolio(buildFolio(request.saleDate(), saleRepository.nextFolioSequence()));
+        sale.setFolio(String.valueOf(saleRepository.nextFolioSequence()));
         sale.setCustomer(customer); sale.setSaleDate(request.saleDate()); sale.setCreatedBy(createdBy); sale.setStatus(SaleStatus.ACTIVE);
         BigDecimal totalPrice = ZERO, totalDown = ZERO, totalFinanced = ZERO;
         List<SaleLot> saleLots = new ArrayList<>();
@@ -102,9 +102,14 @@ public class SaleServiceImpl implements SaleService {
     @Override @Transactional(readOnly = true)
     public SaleDetailResponse get(Long id) { Sale sale = saleRepository.findDetailById(id).orElseThrow(SaleNotFoundException::new); return toDetail(sale, sale.getSaleLots()); }
 
-    private SaleSummaryResponse toSummary(Sale sale) { List<String> codes = sale.getSaleLots().stream().map(sl -> sl.getLot().getCode()).toList(); return new SaleSummaryResponse(sale.getId(), sale.getFolio(), sale.getSaleDate(), sale.getCustomer().getId(), sale.getCustomer().getFullName(), sale.getCustomer().getPhone(), codes.size(), codes, sale.getTotalAgreedPrice(), sale.getTotalDownPayment(), sale.getTotalFinancedAmount(), sale.getStatus(), sale.getCreatedAt()); }
-    private SaleDetailResponse toDetail(Sale sale, List<SaleLot> lots) { var customer = sale.getCustomer(); var user = sale.getCreatedBy(); var ci = new SaleDetailResponse.CustomerInfo(customer.getId(), customer.getFullName(), customer.getPhone(), customer.getAlternatePhone(), customer.getAddress()); var ui = new SaleDetailResponse.UserInfo(user.getId(), user.getFullName(), user.getUsername()); List<SaleLotResponse> responses = lots.stream().map(this::toLotResponse).toList(); return new SaleDetailResponse(sale.getId(), sale.getFolio(), sale.getSaleDate(), ci, ui, sale.getTotalAgreedPrice(), sale.getTotalDownPayment(), sale.getTotalFinancedAmount(), sale.getStatus(), sale.getCreatedAt(), sale.getUpdatedAt(), responses); }
+    private SaleSummaryResponse toSummary(Sale sale) { List<String> codes = sale.getSaleLots().stream().map(sl -> sl.getLot().getCode()).toList(); return new SaleSummaryResponse(sale.getId(), displayFolio(sale.getFolio()), sale.getSaleDate(), sale.getCustomer().getId(), sale.getCustomer().getFullName(), sale.getCustomer().getPhone(), codes.size(), codes, sale.getTotalAgreedPrice(), sale.getTotalDownPayment(), sale.getTotalFinancedAmount(), sale.getStatus(), sale.getCreatedAt()); }
+    private SaleDetailResponse toDetail(Sale sale, List<SaleLot> lots) { var customer = sale.getCustomer(); var user = sale.getCreatedBy(); var ci = new SaleDetailResponse.CustomerInfo(customer.getId(), customer.getFullName(), customer.getPhone(), customer.getAlternatePhone(), customer.getAddress()); var ui = new SaleDetailResponse.UserInfo(user.getId(), user.getFullName(), user.getUsername()); List<SaleLotResponse> responses = lots.stream().map(this::toLotResponse).toList(); return new SaleDetailResponse(sale.getId(), displayFolio(sale.getFolio()), sale.getSaleDate(), ci, ui, sale.getTotalAgreedPrice(), sale.getTotalDownPayment(), sale.getTotalFinancedAmount(), sale.getStatus(), sale.getCreatedAt(), sale.getUpdatedAt(), responses); }
     private SaleLotResponse toLotResponse(SaleLot sl) { Lot lot = sl.getLot(); List<SaleInstallmentResponse> installments = sl.getInstallments().stream().sorted(Comparator.comparing(SaleInstallment::getPaymentMonth).thenComparing(SaleInstallment::getInstallmentNumber)).map(saleMapper::toInstallmentResponse).toList(); LocalDate firstPaymentMonth = installments.isEmpty() ? null : installments.get(0).paymentMonth(); return new SaleLotResponse(lot.getId(), lot.getCode(), lot.getBlock().getCode(), lot.getLotNumber(), lot.getAreaM2(), lot.getFrontMeters(), lot.getDepthMeters(), sl.getAgreedPrice(), sl.getDownPayment(), sl.getFinancedAmount(), sl.getOutstandingBalance(), sl.getInstallmentCount(), sl.getInstallmentAmount(), firstPaymentMonth, sl.getStatus(), installments); }
     private BigDecimal money(BigDecimal value) { return value.setScale(2, RoundingMode.HALF_UP); }
-    private String buildFolio(LocalDate date, Long sequence) { return String.format(Locale.ROOT, "VTA-%d-%06d", date.getYear(), sequence); }
+    private String displayFolio(String folio) {
+        if (folio != null && folio.matches("VTA-\\d{4}-\\d+")) {
+            return folio.substring(folio.lastIndexOf('-') + 1).replaceFirst("^0+(?!$)", "");
+        }
+        return folio;
+    }
 }

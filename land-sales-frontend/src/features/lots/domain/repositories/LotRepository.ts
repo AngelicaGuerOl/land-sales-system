@@ -3,7 +3,7 @@ import type { LotBlockOption } from '../entities/Lot'
 import type { Lot, LotFormInput, LotPriceHistory, LotStatus } from '../entities/Lot'
 
 export type LotQuery = {
-  lotificationId: number
+  lotificationId?: number
   blockId?: number
   status?: LotStatus
   search?: string
@@ -11,7 +11,7 @@ export type LotQuery = {
 
 export interface LotRepository {
   getLotifications(): Promise<Lotification[]>
-  getBlocks(lotificationId: number): Promise<LotBlockOption[]>
+  getBlocks(lotificationId?: number): Promise<LotBlockOption[]>
   getLots(query: LotQuery): Promise<Lot[]>
   getLot(id: number): Promise<Lot>
   createLot(input: LotFormInput): Promise<Lot>

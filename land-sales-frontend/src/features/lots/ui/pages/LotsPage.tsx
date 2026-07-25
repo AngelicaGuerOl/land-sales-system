@@ -15,11 +15,10 @@ import { LotFormDialog } from '../components/LotFormDialog'
 import { LotsFilters, type LotsFiltersValue } from '../components/LotsFilters'
 import { LotTable } from '../components/LotTable'
 import { useBlocks } from '../hooks/useBlocks'
-import { useLotifications } from '../hooks/useLotifications'
 import { useLotMutations } from '../hooks/useLotMutations'
 import { useLots } from '../hooks/useLots'
 
-const initialFilters: LotsFiltersValue = { lotificationId: '', search: '', blockId: '', status: '' }
+const initialFilters: LotsFiltersValue = { search: '', blockId: '', status: '' }
 
 type Feedback = { message: string; severity: 'success' | 'error' }
 type FormState = { mode: 'create' | 'edit'; lot: Lot | null } | null
@@ -40,7 +39,6 @@ export function LotsPage() {
   const [searchParams] = useSearchParams()
   const [filters, setFilters] = useState<LotsFiltersValue>(() => ({
     ...initialFilters,
-    lotificationId: searchParams.get('lotificationId') ? Number(searchParams.get('lotificationId')) : '',
     blockId: searchParams.get('blockId') ? Number(searchParams.get('blockId')) : '',
   }))
   const [selectedLotId, setSelectedLotId] = useState<number | null>(null)
@@ -49,24 +47,15 @@ export function LotsPage() {
   const [feedback, setFeedback] = useState<Feedback | null>(null)
   const queryClient = useQueryClient()
   const mutations = useLotMutations()
-  const lotificationsQuery = useLotifications()
-  const lotifications = (lotificationsQuery.data ?? []).filter((lotification) => lotification.active)
-  const selectedLotificationId = filters.lotificationId === '' ? lotifications[0]?.id ?? null : filters.lotificationId
-  const blocksQuery = useBlocks(selectedLotificationId)
+  const blocksQuery = useBlocks()
   const lotsQueryParams = useMemo<LotQuery | null>(() => {
-    if (selectedLotificationId === null) return null
     return {
-      lotificationId: selectedLotificationId,
       ...(filters.blockId === '' ? {} : { blockId: filters.blockId }),
       ...(filters.status === '' ? {} : { status: filters.status as LotStatus }),
       ...(filters.search.trim() ? { search: filters.search } : {}),
     }
-  }, [filters.blockId, filters.search, filters.status, selectedLotificationId])
+  }, [filters.blockId, filters.search, filters.status])
   const lotsQuery = useLots(lotsQueryParams)
-
-  if (lotificationsQuery.isLoading) return <LoadingScreen message="Cargando lotificaciones..." />
-  if (lotificationsQuery.isError) return <PageContainer><Alert severity="error">No fue posible cargar las lotificaciones.</Alert></PageContainer>
-  if (lotifications.length === 0) return <PageContainer><EmptyState title="Sin lotificaciones" description="Aún no hay lotificaciones registradas para consultar." /></PageContainer>
 
   const tableLots = lotsQuery.data ?? []
   const blocks = blocksQuery.data ?? []
@@ -123,9 +112,7 @@ export function LotsPage() {
         <Stack spacing={1.5}>
           <LotsFilters
             blocks={blocks}
-            lotifications={lotifications}
-            value={{ ...filters, lotificationId: selectedLotificationId ?? '' }}
-            showLotification={lotifications.length > 1}
+            value={filters}
             onChange={(next) => { setSelectedLotId(null); setFilters(next) }}
           />
           {blocksQuery.isError ? <Alert severity="error">No fue posible cargar las manzanas.</Alert> : null}
@@ -138,7 +125,7 @@ export function LotsPage() {
           {lotsQuery.isLoading ? <LoadingScreen message="Cargando lotes..." /> : null}
           {lotsQuery.isError ? <Alert severity="error">No fue posible cargar los lotes.</Alert> : null}
           {!lotsQuery.isLoading && !lotsQuery.isError && tableLots.length === 0 ? <EmptyState title="Sin resultados" description="Ajusta la búsqueda, manzana o estado seleccionado." /> : null}
-          {!lotsQuery.isLoading && !lotsQuery.isError && tableLots.length > 0 ? (
+          {!lotsQuery.isLoading && !lotsQuery.isError ? (
             <LotTable
               lots={tableLots}
               onSelect={(lot) => setSelectedLotId(lot.id)}

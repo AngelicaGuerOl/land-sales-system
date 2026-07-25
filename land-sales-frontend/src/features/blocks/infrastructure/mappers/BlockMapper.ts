@@ -5,8 +5,8 @@ type NumericDto = number | string | null
 
 export type BlockDto = {
   id: number
-  lotificationId: number
-  lotificationName: string
+  lotificationId: number | null
+  lotificationName: string | null
   code: string
   areaM2: NumericDto
   plannedLotCount: number

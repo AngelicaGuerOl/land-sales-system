@@ -11,6 +11,7 @@ export const routePaths = {
   accountStatements: '/estado-de-cuenta',
   customerStatement: '/estado-de-cuenta/:customerId',
   payments: '/pagos',
+  reports: '/reportes',
   paymentDetail: '/pagos/:id',
   paymentReceipt: '/pagos/:id/recibo',
 }

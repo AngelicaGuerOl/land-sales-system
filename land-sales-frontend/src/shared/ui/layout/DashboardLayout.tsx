@@ -10,6 +10,7 @@ import PeopleAltOutlinedIcon from '@mui/icons-material/PeopleAltOutlined'
 import PointOfSaleOutlinedIcon from '@mui/icons-material/PointOfSaleOutlined'
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined'
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined'
+import AssessmentOutlinedIcon from '@mui/icons-material/AssessmentOutlined'
 import { AppBar, Box, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material'
 import { useState } from 'react'
 import { Link as RouterLink, Outlet, useLocation } from 'react-router-dom'
@@ -37,6 +38,10 @@ const salesNavigation = [
 const collectionNavigation = [
   { label: 'Estado de cuenta', path: routePaths.accountStatements, icon: <AccountBalanceWalletOutlinedIcon /> },
   { label: 'Historial de pagos', path: routePaths.payments, icon: <ReceiptLongOutlinedIcon /> },
+]
+
+const reportsNavigation = [
+  { label: 'Reporte general', path: routePaths.reports, icon: <AssessmentOutlinedIcon /> },
 ]
 
 export function DashboardLayout() {
@@ -69,7 +74,7 @@ export function DashboardLayout() {
           return collapsed && !isMobile ? <Tooltip title="Dashboard" placement="right">{button}</Tooltip> : button
         })()}
       </List>
-      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 2, pb: 1 }}>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 1.2, pb: 0.5 }}>
         {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>VENTAS</Typography>}
       </Box>
       <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
@@ -82,7 +87,7 @@ export function DashboardLayout() {
           return collapsed && !isMobile ? <Tooltip key={item.path} title={item.label} placement="right">{button}</Tooltip> : <Box key={item.path}>{button}</Box>
         })}
       </List>
-      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 3, pb: 1 }}>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 0.82, pb: 0.2 }}>
         {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>COBRANZA</Typography>}
       </Box>
       <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
@@ -95,7 +100,20 @@ export function DashboardLayout() {
           return collapsed && !isMobile ? <Tooltip key={item.path} title={item.label} placement="right">{button}</Tooltip> : <Box key={item.path}>{button}</Box>
         })}
       </List>
-      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 3, pb: 1 }}>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 0.82, pb: 0.2 }}>
+        {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>REPORTES</Typography>}
+      </Box>
+      <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
+        {reportsNavigation.map((item) => {
+          const active = location.pathname === item.path || location.pathname.startsWith(`${item.path}/`)
+          const button = <ListItemButton component={RouterLink} to={item.path} selected={active} onClick={closeMobile} sx={{ minHeight: 46, justifyContent: collapsed && !isMobile ? 'center' : 'initial', px: collapsed && !isMobile ? 1.25 : 1.5, borderRadius: 1.5, mb: 0.5, '&.Mui-selected': { bgcolor: 'primary.main', color: 'primary.contrastText', '& .MuiListItemIcon-root': { color: 'inherit' } }, '&.Mui-selected:hover': { bgcolor: 'primary.dark' } }}>
+            <ListItemIcon sx={{ minWidth: collapsed && !isMobile ? 0 : 38, justifyContent: 'center', color: active ? 'inherit' : 'text.secondary' }}>{item.icon}</ListItemIcon>
+            {(!collapsed || isMobile) && <ListItemText primary={<Typography component="span" sx={{ fontWeight: active ? 700 : 500 }}>{item.label}</Typography>} />}
+          </ListItemButton>
+          return collapsed && !isMobile ? <Tooltip key={item.path} title={item.label} placement="right">{button}</Tooltip> : <Box key={item.path}>{button}</Box>
+        })}
+      </List>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 0.82, pb: 0.2 }}>
         {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>TERRENOS</Typography>}
       </Box>
       <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>
@@ -108,7 +126,7 @@ export function DashboardLayout() {
           return collapsed && !isMobile ? <Tooltip key={item.path} title={item.label} placement="right">{button}</Tooltip> : <Box key={item.path}>{button}</Box>
         })}
       </List>
-      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 2, pb: 1 }}>
+      <Box sx={{ px: collapsed && !isMobile ? 1 : 2, pt: 0.82, pb: 0.2 }}>
         {(!collapsed || isMobile) && <Typography variant="overline" color="text.secondary" sx={{ fontWeight: 800, letterSpacing: 1.2 }}>CLIENTES</Typography>}
       </Box>
       <List sx={{ px: collapsed && !isMobile ? 1 : 1.5, pt: 0 }}>

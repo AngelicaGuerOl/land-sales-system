@@ -1,5 +1,5 @@
 import type { LotBlockOption } from '../../domain/entities/Lot'
-type BlocksReader = { getBlocks(lotificationId: number): Promise<LotBlockOption[]> }
+type BlocksReader = { getBlocks(lotificationId?: number): Promise<LotBlockOption[]> }
 
 export class GetBlocksUseCase {
   private readonly lotMapRepository: BlocksReader
@@ -8,7 +8,7 @@ export class GetBlocksUseCase {
     this.lotMapRepository = lotMapRepository
   }
 
-  execute(lotificationId: number): Promise<LotBlockOption[]> {
+  execute(lotificationId?: number): Promise<LotBlockOption[]> {
     return this.lotMapRepository.getBlocks(lotificationId)
   }
 }

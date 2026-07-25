@@ -8,7 +8,7 @@ export class GetBlocksUseCase {
     this.repository = repository
   }
 
-  execute(lotificationId: number): Promise<LandBlock[]> {
+  execute(lotificationId?: number): Promise<LandBlock[]> {
     return this.repository.getBlocks(lotificationId)
   }
 }

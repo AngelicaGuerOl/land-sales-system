@@ -14,7 +14,7 @@ import { formatCurrency, formatNumber } from '../../../../shared/utils/formatter
 import type { SaleCustomerOption, SaleLotOption } from '../../domain/entities/Sale'
 import { saleDependencies } from '../../dependencies'
 import { MoneyInput } from '../components/MoneyInput'
-import { useAvailableLots, useSaleBlocks, useSaleCustomers, useSaleLotifications } from '../hooks/useSaleLookups'
+import { useAvailableLots, useSaleBlocks, useSaleCustomers } from '../hooks/useSaleLookups'
 import { saleSchema, type SaleFormValues } from '../schemas/saleSchema'
 
 const steps = ['Cliente', 'Lotes', 'Condiciones de pago', 'Confirmación']
@@ -23,7 +23,7 @@ const today = new Date().toISOString().slice(0, 10)
 export function NewSalePage() {
   const navigate = useNavigate(); const [step, setStep] = useState(0); const [customerSearch, setCustomerSearch] = useState(''); const [lotSearch, setLotSearch] = useState(''); const [selectedCustomer, setSelectedCustomer] = useState<SaleCustomerOption | null>(null); const [blockId, setBlockId] = useState<number | undefined>(); const [confirmOpen, setConfirmOpen] = useState(false); const [feedback, setFeedback] = useState<string | null>(null); const [saving, setSaving] = useState(false)
   const form = useForm<SaleFormValues>({ resolver: zodResolver(saleSchema), defaultValues: { customerId: 0, saleDate: today, lots: [] } }); const { control, setValue, trigger, getValues } = form; const fieldArray = useFieldArray({ control, name: 'lots' }); const values = useWatch({ control })
-  const customers = useSaleCustomers(customerSearch).data ?? []; const lotifications = useSaleLotifications().data ?? []; const lotificationId = lotifications.find((item) => item.active)?.id ?? lotifications[0]?.id ?? null; const blocks = useSaleBlocks(lotificationId).data ?? []; const lotsQuery = useAvailableLots(lotificationId, blockId, lotSearch); const lots = useMemo(() => lotsQuery.data ?? [], [lotsQuery.data]); const selectedIds = new Set((values.lots ?? []).map((lot) => lot.lotId)); const availableById = useMemo(() => new Map(lots.map((lot) => [lot.id, lot])), [lots])
+  const customers = useSaleCustomers(customerSearch).data ?? []; const blocks = useSaleBlocks().data ?? []; const lotsQuery = useAvailableLots(undefined, blockId, lotSearch); const lots = useMemo(() => lotsQuery.data ?? [], [lotsQuery.data]); const selectedIds = new Set((values.lots ?? []).map((lot) => lot.lotId)); const availableById = useMemo(() => new Map(lots.map((lot) => [lot.id, lot])), [lots])
   function selectCustomer(customer: SaleCustomerOption) { setSelectedCustomer(customer); setValue('customerId', customer.id, { shouldValidate: true }); setCustomerSearch('') }
   function toggleLot(lot: SaleLotOption) { const index = fieldArray.fields.findIndex((item) => item.lotId === lot.id); if (index >= 0) fieldArray.remove(index); else fieldArray.append({ lotId: lot.id, agreedPrice: lot.price ?? 0, downPayment: 0, installmentCount: 12 }) }
   async function next() { const valid = step === 0 ? await trigger('customerId') : step === 1 ? fieldArray.fields.length > 0 : await trigger(); if (valid) setStep((value) => Math.min(value + 1, 3)) }
