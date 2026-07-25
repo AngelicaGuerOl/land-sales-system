@@ -6,6 +6,8 @@ import com.angelica.landsalesbackend.block.exception.BlockConflictException;
 import com.angelica.landsalesbackend.block.exception.BulkLotConflictException;
 import com.angelica.landsalesbackend.sale.exception.SaleConflictException;
 import com.angelica.landsalesbackend.sale.exception.SaleValidationException;
+import com.angelica.landsalesbackend.payment.exception.PaymentConflictException;
+import com.angelica.landsalesbackend.payment.exception.PaymentValidationException;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
@@ -55,7 +57,7 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.BAD_REQUEST, "Validation failed", request, errors);
     }
 
-    @ExceptionHandler({LotValidationException.class, SaleValidationException.class})
+    @ExceptionHandler({LotValidationException.class, SaleValidationException.class, PaymentValidationException.class})
     ResponseEntity<ApiErrorResponse> businessValidation(Exception ex, HttpServletRequest request) {
         return error(HttpStatus.BAD_REQUEST, ex.getMessage(), request, null);
     }
@@ -65,11 +67,12 @@ public class GlobalExceptionHandler {
             BlockConflictException.class,
             BulkLotConflictException.class,
             SaleConflictException.class,
+            PaymentConflictException.class,
             DataIntegrityViolationException.class,
             OptimisticLockingFailureException.class
     })
     ResponseEntity<ApiErrorResponse> conflict(Exception ex, HttpServletRequest request) {
-        String message = ex instanceof LotConflictException || ex instanceof BlockConflictException || ex instanceof BulkLotConflictException || ex instanceof SaleConflictException
+        String message = ex instanceof LotConflictException || ex instanceof BlockConflictException || ex instanceof BulkLotConflictException || ex instanceof SaleConflictException || ex instanceof PaymentConflictException
                 ? ex.getMessage()
                 : "The lot was changed by another request or conflicts with existing data";
         Map<String, String> details = ex instanceof BulkLotConflictException bulk

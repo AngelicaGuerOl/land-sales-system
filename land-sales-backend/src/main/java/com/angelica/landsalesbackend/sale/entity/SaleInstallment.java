@@ -18,7 +18,7 @@ public class SaleInstallment {
     @Column(nullable = false) private LocalDateTime updatedAt;
     @PrePersist void prePersist() { LocalDateTime now = LocalDateTime.now(); createdAt = createdAt == null ? now : createdAt; updatedAt = updatedAt == null ? now : updatedAt; }
     @PreUpdate void preUpdate() { updatedAt = LocalDateTime.now(); }
-    public Long getId() { return id; } public SaleLot getSaleLot() { return saleLot; } public void setSaleLot(SaleLot v) { saleLot = v; }
+    public Long getId() { return id; } public void setId(Long v) { id = v; } public SaleLot getSaleLot() { return saleLot; } public void setSaleLot(SaleLot v) { saleLot = v; }
     public int getInstallmentNumber() { return installmentNumber; } public void setInstallmentNumber(int v) { installmentNumber = v; }
     public LocalDate getPaymentMonth() { return paymentMonth; } public void setPaymentMonth(LocalDate v) { paymentMonth = v; }
     public BigDecimal getAmount() { return amount; } public void setAmount(BigDecimal v) { amount = v; }

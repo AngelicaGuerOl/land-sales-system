@@ -4,6 +4,7 @@ import com.angelica.landsalesbackend.sale.entity.Sale;
 import com.angelica.landsalesbackend.sale.entity.SaleStatus;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -40,4 +41,7 @@ public interface SaleRepository extends JpaRepository<Sale, Long> {
 
     @Query("select distinct s from Sale s join fetch s.customer c join fetch s.createdBy u left join fetch s.saleLots sl left join fetch sl.lot l where s.id = :id")
     Optional<Sale> findDetailById(@Param("id") Long id);
+
+    @Query("select distinct s from Sale s join fetch s.customer c left join fetch s.saleLots sl left join fetch sl.lot l where c.id = :customerId order by s.saleDate asc, l.code asc")
+    List<Sale> findAllByCustomerIdWithLots(@Param("customerId") Long customerId);
 }

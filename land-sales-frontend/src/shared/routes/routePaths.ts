@@ -8,4 +8,9 @@ export const routePaths = {
   sales: '/ventas',
   newSale: '/ventas/nueva',
   saleDetail: '/ventas/:id',
+  accountStatements: '/estado-de-cuenta',
+  customerStatement: '/estado-de-cuenta/:customerId',
+  payments: '/pagos',
+  paymentDetail: '/pagos/:id',
+  paymentReceipt: '/pagos/:id/recibo',
 }

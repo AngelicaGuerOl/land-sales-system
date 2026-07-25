@@ -13,6 +13,7 @@ import com.angelica.landsalesbackend.sale.dto.CreateSaleLotRequest;
 import com.angelica.landsalesbackend.sale.dto.CreateSaleRequest;
 import com.angelica.landsalesbackend.sale.entity.SaleInstallment;
 import com.angelica.landsalesbackend.sale.entity.SaleInstallmentStatus;
+import com.angelica.landsalesbackend.sale.entity.SaleStatus;
 import com.angelica.landsalesbackend.sale.mapper.SaleMapper;
 import com.angelica.landsalesbackend.sale.repository.SaleRepository;
 import com.angelica.landsalesbackend.sale.service.SaleServiceImpl;
@@ -52,6 +53,7 @@ class SaleServiceImplTest {
         CreateSaleRequest request = new CreateSaleRequest(1L, LocalDate.of(2026, 6, 24), List.of(new CreateSaleLotRequest(10L, new BigDecimal("100000"), BigDecimal.ZERO, 3)));
         var response = service.create(request, new AuthenticatedUser(9L, "admin"));
         assertEquals("VTA-2026-000001", response.folio()); assertEquals(LotStatus.SOLD, lot.getStatus()); assertEquals(new BigDecimal("100000.00"), response.totalFinancedAmount()); assertEquals(LocalDate.of(2026, 7, 1), response.lots().get(0).firstPaymentMonth());
+        assertEquals(SaleStatus.ACTIVE, response.status());
         assertEquals(new BigDecimal("33333.33"), response.lots().get(0).installments().get(0).amount()); assertEquals(new BigDecimal("33333.34"), response.lots().get(0).installments().get(2).amount());
         assertTrue(response.lots().get(0).installments().stream().allMatch(installment -> installment.status() == SaleInstallmentStatus.PENDING));
     }
@@ -66,6 +68,6 @@ class SaleServiceImplTest {
     @Test void fullyPaidLotDoesNotCreateInstallments() {
         CreateSaleRequest request = new CreateSaleRequest(1L, LocalDate.of(2026, 7, 24), List.of(new CreateSaleLotRequest(10L, new BigDecimal("100000"), new BigDecimal("100000"), 0)));
         var response = service.create(request, new AuthenticatedUser(9L, "admin"));
-        assertEquals(0, response.lots().get(0).installments().size()); assertEquals("PAID", response.lots().get(0).status().name());
+        assertEquals(0, response.lots().get(0).installments().size()); assertEquals("PAID", response.lots().get(0).status().name()); assertEquals(SaleStatus.PAID, response.status());
     }
 }

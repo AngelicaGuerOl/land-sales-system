@@ -1,0 +1,6 @@
+export type PaymentMethod = 'CASH' | 'TRANSFER'
+export type PaymentInput = { customerId: number; paymentMethod: PaymentMethod; reference: string | null; allocations: { saleLotId: number; installments: { installmentId: number; amount: number }[] }[] }
+export type PaymentPage = { content: PaymentSummary[]; page: number; size: number; totalElements: number; totalPages: number; first: boolean; last: boolean }
+export type PaymentSummary = { id: number; paymentNumber: number; paymentDate: string; customerId: number; customerName: string; customerPhone: string; lotCodes: string[]; totalAmount: number; paymentMethod: PaymentMethod; receivedByName: string; createdAt: string }
+export type PaymentDetail = { id: number; paymentNumber: number; paymentDate: string; customer: { id: number; fullName: string; phone: string }; paymentMethod: PaymentMethod; reference: string | null; totalAmount: number; receivedBy: { id: number; fullName: string; username: string }; createdAt: string; allocations: PaymentAllocation[] }
+export type PaymentAllocation = { saleLotId: number; lotCode: string; saleFolio: string; amount: number; balanceBefore: number; balanceAfter: number; installments: { installmentId: number; installmentNumber: number; paymentMonth: string; amount: number; balanceBefore: number; balanceAfter: number; status: 'PENDING' | 'PARTIAL' | 'PAID' }[] }

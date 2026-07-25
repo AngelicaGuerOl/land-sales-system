@@ -1,10 +1,12 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material'
+import type { ReactNode } from 'react'
 
 type ConfirmDialogProps = {
   open: boolean
   title: string
   description: string
   confirmLabel: string
+  details?: ReactNode
   pending?: boolean
   onClose(): void
   onConfirm(): void
@@ -15,15 +17,17 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel,
+  details,
   pending = false,
   onClose,
   onConfirm,
 }: ConfirmDialogProps) {
   return (
-    <Dialog open={open} onClose={pending ? undefined : onClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={pending ? undefined : onClose} maxWidth={details ? 'sm' : 'xs'} fullWidth>
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <Typography color="text.secondary">{description}</Typography>
+        {details}
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} disabled={pending}>

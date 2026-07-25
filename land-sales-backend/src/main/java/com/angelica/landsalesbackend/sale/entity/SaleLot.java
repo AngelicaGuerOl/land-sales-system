@@ -24,7 +24,7 @@ public class SaleLot {
     @OneToMany(mappedBy = "saleLot", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST) private List<SaleInstallment> installments = new ArrayList<>();
     @PrePersist void prePersist() { LocalDateTime now = LocalDateTime.now(); createdAt = createdAt == null ? now : createdAt; updatedAt = updatedAt == null ? now : updatedAt; }
     @PreUpdate void preUpdate() { updatedAt = LocalDateTime.now(); }
-    public Long getId() { return id; } public Sale getSale() { return sale; } public void setSale(Sale v) { sale = v; }
+    public Long getId() { return id; } public void setId(Long v) { id = v; } public Sale getSale() { return sale; } public void setSale(Sale v) { sale = v; }
     public Lot getLot() { return lot; } public void setLot(Lot v) { lot = v; }
     public BigDecimal getAgreedPrice() { return agreedPrice; } public void setAgreedPrice(BigDecimal v) { agreedPrice = v; }
     public BigDecimal getDownPayment() { return downPayment; } public void setDownPayment(BigDecimal v) { downPayment = v; }

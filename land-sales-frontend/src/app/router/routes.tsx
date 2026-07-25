@@ -6,6 +6,8 @@ import { DashboardPage } from '../../features/dashboard'
 import { LotsPage } from '../../features/lots'
 import { ReferencePlanPage } from '../../features/referencePlan'
 import { NewSalePage, SaleDetailPage, SalesPage } from '../../features/sales'
+import { CustomerStatementPage, StatementCustomersPage } from '../../features/accountstatement'
+import { PaymentDetailPage, PaymentHistoryPage, PaymentReceiptPage } from '../../features/payments'
 import { ProtectedRoute } from '../../shared/routes/ProtectedRoute'
 import { PublicRoute } from '../../shared/routes/PublicRoute'
 import { routePaths } from '../../shared/routes/routePaths'
@@ -27,6 +29,11 @@ export const routes = (
         <Route path={routePaths.sales} element={<SalesPage />} />
         <Route path={routePaths.newSale} element={<NewSalePage />} />
         <Route path={routePaths.saleDetail} element={<SaleDetailPage />} />
+        <Route path={routePaths.accountStatements} element={<StatementCustomersPage />} />
+        <Route path={routePaths.customerStatement} element={<CustomerStatementPage />} />
+        <Route path={routePaths.payments} element={<PaymentHistoryPage />} />
+        <Route path={routePaths.paymentDetail} element={<PaymentDetailPage />} />
+        <Route path={routePaths.paymentReceipt} element={<PaymentReceiptPage />} />
       </Route>
     </Route>
     <Route path="/" element={<Navigate to={routePaths.dashboard} replace />} />
