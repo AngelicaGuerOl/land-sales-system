@@ -5,6 +5,7 @@ import com.angelica.landsalesbackend.auth.dto.LoginRequest;
 import com.angelica.landsalesbackend.auth.dto.LoginResponse;
 import com.angelica.landsalesbackend.auth.service.AuthService;
 import com.angelica.landsalesbackend.security.AuthenticatedUser;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +26,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Authenticate a user", security = {})
     public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
     }
