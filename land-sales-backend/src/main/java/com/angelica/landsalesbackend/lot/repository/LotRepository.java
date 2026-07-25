@@ -8,10 +8,16 @@ import java.util.List;
 import java.util.Collection;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 
 public interface LotRepository extends JpaRepository<Lot, Long> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select l from Lot l join fetch l.block b where l.id in :ids")
+    List<Lot> findAllByIdInForUpdate(@Param("ids") Collection<Long> ids);
 
     long countByBlock_Id(Long blockId);
 

@@ -5,4 +5,7 @@ export const routePaths = {
   blocks: '/manzanas',
   customers: '/clientes',
   referencePlan: '/plano',
+  sales: '/ventas',
+  newSale: '/ventas/nueva',
+  saleDetail: '/ventas/:id',
 }

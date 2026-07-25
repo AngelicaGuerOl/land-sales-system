@@ -5,6 +5,7 @@ import { CustomersPage } from '../../features/customers'
 import { DashboardPage } from '../../features/dashboard'
 import { LotsPage } from '../../features/lots'
 import { ReferencePlanPage } from '../../features/referencePlan'
+import { NewSalePage, SaleDetailPage, SalesPage } from '../../features/sales'
 import { ProtectedRoute } from '../../shared/routes/ProtectedRoute'
 import { PublicRoute } from '../../shared/routes/PublicRoute'
 import { routePaths } from '../../shared/routes/routePaths'
@@ -23,6 +24,9 @@ export const routes = (
         <Route path={routePaths.blocks} element={<BlocksPage />} />
         <Route path={routePaths.customers} element={<CustomersPage />} />
         <Route path={routePaths.referencePlan} element={<ReferencePlanPage />} />
+        <Route path={routePaths.sales} element={<SalesPage />} />
+        <Route path={routePaths.newSale} element={<NewSalePage />} />
+        <Route path={routePaths.saleDetail} element={<SaleDetailPage />} />
       </Route>
     </Route>
     <Route path="/" element={<Navigate to={routePaths.dashboard} replace />} />
