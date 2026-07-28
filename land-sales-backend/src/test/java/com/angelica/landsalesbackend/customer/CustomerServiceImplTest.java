@@ -45,7 +45,6 @@ class CustomerServiceImplTest {
         customer.setFullName("Juan Hernández López");
         customer.setPhone("7711234567");
         customer.setActive(true);
-        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerRepository.save(any(Customer.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
@@ -69,6 +68,7 @@ class CustomerServiceImplTest {
     @Test
     void updateDoesNotChangeActive() {
         customer.setActive(false);
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerMapper.toResponse(customer)).thenReturn(response(false));
 
         service.updateCustomer(1L, new UpdateCustomerRequest("Updated", "7710000000", "", "Address"));
@@ -79,6 +79,7 @@ class CustomerServiceImplTest {
 
     @Test
     void changeStatusUpdatesOnlyActiveState() {
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(customerMapper.toResponse(customer)).thenReturn(response(false));
 
         service.changeStatus(1L, new ChangeCustomerStatusRequest(false));
