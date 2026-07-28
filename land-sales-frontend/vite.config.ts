@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 
@@ -17,6 +18,30 @@ export default defineConfig(({ mode }) => {
           target: proxyTarget,
           changeOrigin: true,
         },
+      },
+    },
+    test: {
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.ts',
+      clearMocks: true,
+      restoreMocks: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html', 'lcov'],
+        exclude: [
+          'dist/**',
+          'coverage/**',
+          'node_modules/**',
+          '*.config.*',
+          'src/test/**',
+          'src/**/*.test.{ts,tsx}',
+          'src/**/*.d.ts',
+          'src/main.tsx',
+          'src/App.tsx',
+          'src/app/providers/**',
+          'src/app/router/**',
+          'src/features/**/index.ts',
+        ],
       },
     },
   }
