@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, FormHelperText, MenuItem, Stack, TextField } from '@mui/material'
-import { useEffect, useRef } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useEffect, useRef, useState } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import type { LotBlockOption, Lot, LotFormInput } from '../../domain/entities/Lot'
 import { lotFormSchema, type LotFormValues } from '../schemas/lotFormSchema'
 
@@ -36,7 +36,6 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
     handleSubmit,
     register,
     reset,
-    setError,
     setValue,
   } = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -58,7 +57,9 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
   const watchedCode = useWatch({ control, name: 'code' })
   const watchedPrice = useWatch({ control, name: 'currentPrice' })
   const codeEdited = useRef(false)
+  const [priceChangeReasonError, setPriceChangeReasonError] = useState(false)
   const codeRegistration = register('code')
+  const priceChangeReasonRegistration = register('priceChangeReason')
 
   useEffect(() => {
     if (!open) return
@@ -91,9 +92,10 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
 
   function submit(values: LotFormValues) {
     if (priceChanged && !values.priceChangeReason?.trim()) {
-      setError('priceChangeReason', { type: 'manual', message: 'Ingresa el motivo del cambio de precio' })
+      setPriceChangeReasonError(true)
       return
     }
+    setPriceChangeReasonError(false)
 
     onSubmit({
       blockId: Number(values.blockId),
@@ -110,26 +112,38 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
     })
   }
 
+  function close() {
+    setPriceChangeReasonError(false)
+    onClose()
+  }
+
   return (
-    <Dialog open={open} onClose={pending ? undefined : onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={pending ? undefined : close} fullWidth maxWidth="sm">
       <DialogTitle>{mode === 'create' ? 'Registrar lote' : `Editar ${lot?.code ?? 'lote'}`}</DialogTitle>
       <DialogContent dividers>
-        <Stack component="form" id="lot-form" spacing={2} sx={{ pt: 1 }} onSubmit={handleSubmit(submit)}>
-          <TextField
-            select
-            label="Manzana"
-            disabled={pending || isSold}
-            error={Boolean(errors.blockId)}
-            helperText={errors.blockId?.message}
-            {...register('blockId')}
-          >
-            <MenuItem value="">Selecciona una manzana</MenuItem>
-            {blocks.map((block) => (
-              <MenuItem key={block.id} value={String(block.id)}>
-                {block.code}
-              </MenuItem>
-            ))}
-          </TextField>
+        <Stack component="form" id="lot-form" noValidate spacing={2} sx={{ pt: 1 }} onSubmit={handleSubmit(submit)}>
+          <Controller
+            name="blockId"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                select
+                label="Manzana"
+                disabled={pending || isSold}
+                error={Boolean(errors.blockId)}
+                helperText={errors.blockId?.message}
+                {...field}
+                value={field.value ?? ''}
+              >
+                <MenuItem value="">Selecciona una manzana</MenuItem>
+                {blocks.map((block) => (
+                  <MenuItem key={block.id} value={String(block.id)}>
+                    {block.code}
+                  </MenuItem>
+                ))}
+              </TextField>
+            )}
+          />
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <TextField
               label="Número"
@@ -158,9 +172,13 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
               label="Motivo del cambio de precio"
               required
               disabled={pending}
-              error={Boolean(errors.priceChangeReason)}
-              helperText={errors.priceChangeReason?.message}
-              {...register('priceChangeReason')}
+              error={Boolean(errors.priceChangeReason) || priceChangeReasonError}
+              helperText={errors.priceChangeReason?.message ?? (priceChangeReasonError ? 'Ingresa el motivo del cambio de precio' : undefined)}
+              {...priceChangeReasonRegistration}
+              onChange={(event) => {
+                setPriceChangeReasonError(false)
+                void priceChangeReasonRegistration.onChange(event)
+              }}
             />
           ) : null}
           <TextField label="Referencia de ubicación" multiline minRows={2} disabled={pending} error={Boolean(errors.locationReference)} helperText={errors.locationReference?.message} {...register('locationReference')} />
@@ -169,7 +187,7 @@ export function LotFormDialog({ open, mode, lot, blocks, pending = false, onClos
         </Stack>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} disabled={pending}>Cancelar</Button>
+        <Button onClick={close} disabled={pending}>Cancelar</Button>
         <Button type="submit" form="lot-form" variant="contained" disabled={pending}>
           {pending ? 'Guardando...' : 'Guardar'}
         </Button>
