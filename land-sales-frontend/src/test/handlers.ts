@@ -7,6 +7,7 @@ import type {
   LotificationDto,
   LotPriceHistoryDto,
 } from '../features/lots/infrastructure/mappers/LotMapper'
+import type { PaymentDetail, PaymentPage, PaymentSummary } from '../features/payments/domain/entities/Payment'
 import type { SaleDetail, SalePage, SaleSummary } from '../features/sales/domain/entities/Sale'
 
 export const handlers: RequestHandler[] = []
@@ -356,5 +357,121 @@ export const saleHandlers = {
   },
   createSaleSuccess(sale: SaleDetail = saleFixtures.detail) {
     return http.post('/api/sales', () => HttpResponse.json(sale, { status: 201 }))
+  },
+}
+
+export const paymentFixtures = {
+  summary: {
+    id: 701,
+    paymentNumber: 25,
+    paymentDate: '2026-04-15',
+    customerId: 1,
+    customerName: 'Ana Lopez',
+    customerPhone: '5551234567',
+    lotCodes: ['A-01'],
+    totalAmount: 16666.67,
+    paymentMethod: 'TRANSFER',
+    receivedByName: 'Usuario Prueba',
+    createdAt: '2026-04-15T11:00:00',
+  },
+  cashSummary: {
+    id: 702,
+    paymentNumber: 26,
+    paymentDate: '2026-04-16',
+    customerId: 2,
+    customerName: 'Bruno Perez',
+    customerPhone: '5557654321',
+    lotCodes: ['B-02'],
+    totalAmount: 12000,
+    paymentMethod: 'CASH',
+    receivedByName: 'Usuario Prueba',
+    createdAt: '2026-04-16T12:00:00',
+  },
+  detail: {
+    id: 701,
+    paymentNumber: 25,
+    paymentDate: '2026-04-15',
+    customer: {
+      id: 1,
+      fullName: 'Ana Lopez',
+      phone: '5551234567',
+    },
+    paymentMethod: 'TRANSFER',
+    reference: 'TR-12345',
+    totalAmount: 16666.67,
+    receivedBy: {
+      id: 10,
+      fullName: 'Local Administrator',
+      username: 'admin',
+    },
+    createdAt: '2026-04-15T11:00:00',
+    allocations: [
+      {
+        saleLotId: 901,
+        lotCode: 'A-01',
+        saleFolio: 'V-2026-0001',
+        amount: 16666.67,
+        balanceBefore: 200000,
+        balanceAfter: 183333.33,
+        installments: [
+          {
+            installmentId: 3001,
+            installmentNumber: 1,
+            paymentMonth: '2026-04-01',
+            amount: 16666.67,
+            balanceBefore: 16666.67,
+            balanceAfter: 0,
+            status: 'PAID',
+          },
+        ],
+      },
+    ],
+  },
+} satisfies {
+  summary: PaymentSummary
+  cashSummary: PaymentSummary
+  detail: PaymentDetail
+}
+
+export function createPaymentPage(
+  content: PaymentSummary[] = [paymentFixtures.summary],
+  overrides: Partial<Omit<PaymentPage, 'content'>> = {},
+): PaymentPage {
+  return {
+    content,
+    page: 0,
+    size: 25,
+    totalElements: content.length,
+    totalPages: content.length > 0 ? 1 : 0,
+    first: true,
+    last: true,
+    ...overrides,
+  }
+}
+
+export const paymentHandlers = {
+  getPaymentsSuccess(page: PaymentPage = createPaymentPage()) {
+    return http.get('/api/payments', () => HttpResponse.json(page))
+  },
+  getPaymentsEmpty() {
+    return http.get('/api/payments', () => HttpResponse.json(createPaymentPage([])))
+  },
+  getPaymentsError() {
+    return http.get('/api/payments', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+  getPaymentSuccess(payment: PaymentDetail = paymentFixtures.detail) {
+    return http.get('/api/payments/:id', () => HttpResponse.json(payment))
+  },
+  getPaymentError() {
+    return http.get('/api/payments/:id', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+  createPaymentSuccess(payment: PaymentDetail = paymentFixtures.detail) {
+    return http.post('/api/payments', () => HttpResponse.json(payment, { status: 201 }))
+  },
+  badRequest(message = 'Revisa los datos del pago.') {
+    return HttpResponse.json({ message }, { status: 400 })
+  },
+  conflict(message = 'El pago entra en conflicto con el estado actual de la venta.') {
+    return HttpResponse.json({ message }, { status: 409 })
   },
 }
