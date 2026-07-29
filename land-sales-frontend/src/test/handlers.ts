@@ -7,6 +7,7 @@ import type {
   LotificationDto,
   LotPriceHistoryDto,
 } from '../features/lots/infrastructure/mappers/LotMapper'
+import type { SaleDetail, SalePage, SaleSummary } from '../features/sales/domain/entities/Sale'
 
 export const handlers: RequestHandler[] = []
 
@@ -213,5 +214,147 @@ export const lotHandlers = {
   },
   conflict(message = 'El lote cambió o entra en conflicto con otro registro.') {
     return HttpResponse.json({ message }, { status: 409 })
+  },
+}
+
+export const saleFixtures = {
+  customer: {
+    id: 1,
+    fullName: 'Ana Lopez',
+    phone: '5551234567',
+    alternatePhone: null,
+    address: 'Calle Norte 100',
+    active: true,
+    createdAt: '2026-03-01T10:00:00',
+    updatedAt: '2026-03-01T10:00:00',
+  },
+  availableLot: {
+    id: 101,
+    blockId: 10,
+    code: 'A-01',
+    blockCode: 'A',
+    lotNumber: '01',
+    areaM2: 120,
+    frontMeters: 8,
+    depthMeters: 15,
+    price: 250000,
+    status: 'AVAILABLE',
+    locationReference: 'Frente al parque',
+    notes: null,
+    version: 3,
+  },
+  summary: {
+    id: 501,
+    folio: 'V-2026-0001',
+    saleDate: '2026-03-10',
+    customerId: 1,
+    customerName: 'Ana Lopez',
+    customerPhone: '5551234567',
+    lotCount: 1,
+    lotCodes: ['A-01'],
+    totalAgreedPrice: 250000,
+    totalDownPayment: 50000,
+    totalFinancedAmount: 200000,
+    status: 'ACTIVE',
+    createdAt: '2026-03-10T10:00:00',
+  },
+  detail: {
+    id: 501,
+    folio: 'V-2026-0001',
+    saleDate: '2026-03-10',
+    customer: {
+      id: 1,
+      fullName: 'Ana Lopez',
+      phone: '5551234567',
+      address: 'Calle Norte 100',
+      alternatePhone: null,
+    },
+    createdBy: {
+      id: 10,
+      fullName: 'Usuario Prueba',
+      username: 'tester',
+    },
+    totalAgreedPrice: 250000,
+    totalDownPayment: 50000,
+    totalFinancedAmount: 200000,
+    status: 'ACTIVE',
+    createdAt: '2026-03-10T10:00:00',
+    updatedAt: '2026-03-10T10:00:00',
+    lots: [
+      {
+        lotId: 101,
+        code: 'A-01',
+        blockCode: 'A',
+        lotNumber: '01',
+        areaM2: 120,
+        frontMeters: 8,
+        depthMeters: 15,
+        agreedPrice: 250000,
+        downPayment: 50000,
+        installmentCount: 12,
+        financedAmount: 200000,
+        outstandingBalance: 200000,
+        installmentAmount: 16666.67,
+        firstPaymentMonth: '2026-04-01',
+        status: 'ACTIVE',
+        installments: [
+          {
+            installmentNumber: 1,
+            paymentMonth: '2026-04-01',
+            amount: 16666.67,
+            paidAmount: 0,
+            status: 'PENDING',
+          },
+        ],
+      },
+    ],
+  },
+} satisfies {
+  customer: CustomerDto
+  availableLot: LotDto
+  summary: SaleSummary
+  detail: SaleDetail
+}
+
+export function createSalePage(
+  content: SaleSummary[] = [saleFixtures.summary],
+  overrides: Partial<Omit<SalePage, 'content'>> = {},
+): SalePage {
+  return {
+    content,
+    page: 0,
+    size: 25,
+    totalElements: content.length,
+    totalPages: content.length > 0 ? 1 : 0,
+    first: true,
+    last: true,
+    ...overrides,
+  }
+}
+
+export const saleHandlers = {
+  getCustomersSuccess(customers = [saleFixtures.customer]) {
+    return http.get('/api/customers', () => HttpResponse.json(createCustomerPage(customers)))
+  },
+  getAvailableLotsSuccess(lots: LotDto[] = [saleFixtures.availableLot]) {
+    return http.get('/api/lots', () => HttpResponse.json(lots))
+  },
+  getSalesSuccess(page: SalePage = createSalePage()) {
+    return http.get('/api/sales', () => HttpResponse.json(page))
+  },
+  getSalesEmpty() {
+    return http.get('/api/sales', () => HttpResponse.json(createSalePage([])))
+  },
+  getSalesError() {
+    return http.get('/api/sales', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+  getSaleSuccess(sale: SaleDetail = saleFixtures.detail) {
+    return http.get('/api/sales/:id', () => HttpResponse.json(sale))
+  },
+  getSaleError() {
+    return http.get('/api/sales/:id', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+  createSaleSuccess(sale: SaleDetail = saleFixtures.detail) {
+    return http.post('/api/sales', () => HttpResponse.json(sale, { status: 201 }))
   },
 }
