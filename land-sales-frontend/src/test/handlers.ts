@@ -9,6 +9,7 @@ import type {
   LotPriceHistoryDto,
 } from '../features/lots/infrastructure/mappers/LotMapper'
 import type { PaymentDetail, PaymentPage, PaymentSummary } from '../features/payments/domain/entities/Payment'
+import type { ReportSummary } from '../features/reports/domain/entities/ReportSummary'
 import type { SaleDetail, SalePage, SaleSummary } from '../features/sales/domain/entities/Sale'
 
 export const handlers: RequestHandler[] = []
@@ -614,5 +615,57 @@ export const paymentHandlers = {
   },
   conflict(message = 'El pago entra en conflicto con el estado actual de la venta.') {
     return HttpResponse.json({ message }, { status: 409 })
+  },
+}
+
+export const reportFixtures = {
+  summary: {
+    dateFrom: '2026-07-01',
+    dateTo: '2026-07-28',
+    salesCount: 3,
+    soldLotsCount: 4,
+    totalAgreedAmount: 780000,
+    totalDownPayment: 180000,
+    totalFinancedAmount: 600000,
+    laterPaymentsAmount: 45000,
+    totalCollectedAmount: 225000,
+    outstandingBalance: 555000,
+    byBlock: [
+      {
+        blockCode: 'A',
+        soldLotsCount: 2,
+        totalAgreedAmount: 410000,
+      },
+      {
+        blockCode: 'B',
+        soldLotsCount: 2,
+        totalAgreedAmount: 370000,
+      },
+    ],
+  },
+  empty: {
+    dateFrom: '2026-07-01',
+    dateTo: '2026-07-28',
+    salesCount: 0,
+    soldLotsCount: 0,
+    totalAgreedAmount: 0,
+    totalDownPayment: 0,
+    totalFinancedAmount: 0,
+    laterPaymentsAmount: 0,
+    totalCollectedAmount: 0,
+    outstandingBalance: 0,
+    byBlock: [],
+  },
+} satisfies Record<string, ReportSummary>
+
+export const reportHandlers = {
+  getSummarySuccess(summary: ReportSummary = reportFixtures.summary) {
+    return http.get('/api/reports/summary', () => HttpResponse.json(summary))
+  },
+  getSummaryEmpty(summary: ReportSummary = reportFixtures.empty) {
+    return http.get('/api/reports/summary', () => HttpResponse.json(summary))
+  },
+  getSummaryError() {
+    return http.get('/api/reports/summary', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
   },
 }
