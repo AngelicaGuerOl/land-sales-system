@@ -9,5 +9,7 @@ public interface AuthService {
 
     LoginResponse login(LoginRequest request);
 
+    LoginResponse loginDemo();
+
     CurrentUserResponse getCurrentUser(AuthenticatedUser authenticatedUser);
 }

@@ -31,6 +31,12 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/demo")
+    @Operation(summary = "Authenticate with the configured demo account", security = {})
+    public ResponseEntity<LoginResponse> loginDemo() {
+        return ResponseEntity.ok(authService.loginDemo());
+    }
+
     @GetMapping("/me")
     public ResponseEntity<CurrentUserResponse> me(@AuthenticationPrincipal AuthenticatedUser user) {
         return ResponseEntity.ok(authService.getCurrentUser(user));

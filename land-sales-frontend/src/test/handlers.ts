@@ -219,7 +219,7 @@ export const lotFixtures = {
     {
       id: 10,
       lotificationId: 100,
-      lotificationName: 'Lotificacion Norte',
+      lotificationName: 'Zona Norte',
       code: 'A',
       areaM2: 1200,
       plannedLotCount: 20,
@@ -231,7 +231,7 @@ export const lotFixtures = {
     {
       id: 11,
       lotificationId: 100,
-      lotificationName: 'Lotificacion Norte',
+      lotificationName: 'Zona Norte',
       code: 'B',
       areaM2: 980,
       plannedLotCount: 14,
@@ -244,7 +244,7 @@ export const lotFixtures = {
   lotifications: [
     {
       id: 100,
-      name: 'Lotificacion Norte',
+      name: 'Zona Norte',
       description: 'Proyecto ficticio de pruebas',
       address: 'Avenida Prueba 100',
       planStorageKey: null,

@@ -1,4 +1,4 @@
-import { http, HttpResponse } from 'msw'
+import { delay, http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { server } from '../../test/server'
 import { tokenStorage } from '../lib/storage/tokenStorage'
@@ -6,6 +6,7 @@ import { ApiError } from './apiError'
 import { httpClient, setUnauthorizedHandler } from './httpClient'
 
 afterEach(() => {
+  vi.useRealTimers()
   setUnauthorizedHandler(null)
   tokenStorage.clear()
 })
@@ -93,5 +94,42 @@ describe('httpClient', () => {
     })
 
     expect(unauthorizedHandler).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call the unauthorized handler for skipAuth 401 responses', async () => {
+    const unauthorizedHandler = vi.fn()
+    setUnauthorizedHandler(unauthorizedHandler)
+
+    server.use(
+      http.post('/api/auth/demo', () => {
+        return HttpResponse.json({ message: 'Unauthorized' }, { status: 401 })
+      }),
+    )
+
+    await expect(httpClient.post('/auth/demo', undefined, { skipAuth: true })).rejects.toMatchObject({
+      status: 401,
+      message: 'Unauthorized',
+    })
+
+    expect(unauthorizedHandler).not.toHaveBeenCalled()
+  })
+
+  it('aborts authentication requests that exceed the configured timeout', async () => {
+    vi.useFakeTimers()
+    server.use(
+      http.post('/api/auth/demo', async () => {
+        await delay(2_000)
+        return HttpResponse.json({ ok: true })
+      }),
+    )
+
+    const request = httpClient.post('/auth/demo', undefined, { skipAuth: true, timeoutMs: 1_000 })
+    const assertion = expect(request).rejects.toMatchObject({
+      status: 0,
+      message: 'Request timed out',
+    })
+
+    await vi.advanceTimersByTimeAsync(1_000)
+    await assertion
   })
 })

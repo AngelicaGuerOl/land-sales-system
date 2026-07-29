@@ -24,7 +24,7 @@ function errorMessage(error: unknown) {
   const details = error.details as { validationErrors?: Record<string, string> } | undefined
   const conflicts = details?.validationErrors?.conflicts
   if (error.status === 400) return 'Revisa los datos capturados.'
-  if (error.status === 404) return 'La manzana o lotificación ya no existe.'
+  if (error.status === 404) return 'La manzana o lote ya no existe.'
   if (error.status === 409) return conflicts ? `Ya existen lotes en conflicto: ${conflicts}` : error.message || 'La manzana tiene datos en conflicto.'
   return 'No fue posible completar la operación.'
 }
@@ -95,7 +95,7 @@ export function BlocksPage() {
         </Stack>
         {blocksQuery.isLoading ? <LoadingScreen message="Cargando manzanas..." /> : null}
         {blocksQuery.isError ? <Alert severity="error">No fue posible cargar las manzanas.</Alert> : null}
-        {!blocksQuery.isLoading && !blocksQuery.isError && blocks.length === 0 ? <EmptyState title="Sin manzanas" description="Registra la primera manzana de esta lotificación." /> : null}
+        {!blocksQuery.isLoading && !blocksQuery.isError && blocks.length === 0 ? <EmptyState title="Sin manzanas" description="Registra la primera manzana para organizar los lotes." /> : null}
         {!blocksQuery.isLoading && !blocksQuery.isError ? <BlocksTable blocks={blocks} onViewLots={(block) => navigate(`/lotes?blockId=${block.id}`)} onEdit={(block) => setFormBlock(block)} onDelete={(block) => setDeleteBlock(block)} onGenerate={(block) => setBulkBlock(block)} /> : null}
       </Stack>
       <BlockFormDialog key={`${formBlock?.id ?? 'new'}-${formBlock !== undefined}`} open={formBlock !== undefined} block={formBlock ?? null} pending={busy} onClose={() => setFormBlock(undefined)} onSubmit={saveBlock} />

@@ -7,5 +7,6 @@ export type LoginCredentials = {
 
 export interface AuthRepository {
   login(credentials: LoginCredentials): Promise<AuthSession>
+  loginDemo(): Promise<AuthSession>
   getCurrentUser(): Promise<User>
 }

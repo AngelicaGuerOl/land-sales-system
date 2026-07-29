@@ -6,9 +6,9 @@ const adminPassword = process.env.E2E_ADMIN_PASSWORD ?? 'e2e-admin-password'
 
 async function login(page: Page) {
   await page.goto('/login')
-  await page.getByLabel('Usuario').fill(adminUsername)
-  await page.getByLabel('Contraseña').fill(adminPassword)
-  await page.getByRole('button', { name: 'Entrar' }).click()
+  await page.getByRole('textbox', { name: 'Usuario', exact: true }).fill(adminUsername)
+  await page.getByRole('textbox', { name: 'Contraseña', exact: true }).fill(adminPassword)
+  await page.getByRole('button', { name: 'Iniciar sesión', exact: true }).click()
   await expect(page).toHaveURL(/\/dashboard$/)
   await expect(page.getByText('Land Sales').first()).toBeVisible()
 }
@@ -23,7 +23,7 @@ test.describe('Land Sales E2E', () => {
 
     await page.getByText('Cerrar sesión').click()
     await expect(page).toHaveURL(/\/login$/)
-    await expect(page.getByRole('button', { name: 'Entrar' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Iniciar sesión' })).toBeVisible()
   })
 
   test('creates a unique customer and finds it in the customer list', async ({ page }) => {
