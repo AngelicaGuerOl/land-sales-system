@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { RequestHandler } from 'msw'
+import type { AccountStatement, StatementPage, StatementSummary } from '../features/accountstatement/domain/entities/AccountStatement'
 import type { CustomerDto, CustomerPageDto } from '../features/customers/infrastructure/mappers/CustomerMapper'
 import type {
   BlockDto,
@@ -11,6 +12,146 @@ import type { PaymentDetail, PaymentPage, PaymentSummary } from '../features/pay
 import type { SaleDetail, SalePage, SaleSummary } from '../features/sales/domain/entities/Sale'
 
 export const handlers: RequestHandler[] = []
+
+export const accountStatementFixtures = {
+  summary: {
+    customerId: 1,
+    customerName: 'Ana Lopez',
+    phone: '5551234567',
+    financedLotCount: 1,
+    totalAgreedAmount: 250000,
+    totalDownPayment: 50000,
+    totalPaid: 66666.67,
+    totalOutstandingBalance: 183333.33,
+  },
+  paidSummary: {
+    customerId: 2,
+    customerName: 'Bruno Perez',
+    phone: '5557654321',
+    financedLotCount: 0,
+    totalAgreedAmount: 180000,
+    totalDownPayment: 180000,
+    totalPaid: 180000,
+    totalOutstandingBalance: 0,
+  },
+  detail: {
+    customer: {
+      id: 1,
+      fullName: 'Ana Lopez',
+      phone: '5551234567',
+      alternatePhone: null,
+      address: 'Calle Norte 100',
+    },
+    totals: {
+      totalAgreedAmount: 430000,
+      totalDownPayment: 230000,
+      totalFinancedAmount: 200000,
+      totalPaid: 66666.67,
+      totalOutstandingBalance: 183333.33,
+      lotsWithBalance: 1,
+    },
+    sales: [
+      {
+        saleId: 501,
+        folio: 'V-2026-0001',
+        saleDate: '2026-03-10',
+        lots: [
+          {
+            saleLotId: 901,
+            lotId: 101,
+            code: 'A-01',
+            blockCode: 'A',
+            lotNumber: '01',
+            areaM2: 120,
+            frontMeters: 8,
+            depthMeters: 15,
+            agreedPrice: 250000,
+            downPayment: 50000,
+            financedAmount: 200000,
+            totalPaid: 16666.67,
+            outstandingBalance: 183333.33,
+            status: 'ACTIVE',
+            installments: [
+              {
+                id: 3001,
+                installmentNumber: 1,
+                paymentMonth: '2026-04-01',
+                amount: 16666.67,
+                paidAmount: 0,
+                outstandingAmount: 16666.67,
+                status: 'PENDING',
+              },
+              {
+                id: 3002,
+                installmentNumber: 2,
+                paymentMonth: '2026-05-01',
+                amount: 16666.67,
+                paidAmount: 5000,
+                outstandingAmount: 11666.67,
+                status: 'PARTIAL',
+              },
+            ],
+          },
+          {
+            saleLotId: 902,
+            lotId: 102,
+            code: 'B-02',
+            blockCode: 'B',
+            lotNumber: '02',
+            areaM2: 100,
+            frontMeters: null,
+            depthMeters: null,
+            agreedPrice: 180000,
+            downPayment: 180000,
+            financedAmount: 0,
+            totalPaid: 180000,
+            outstandingBalance: 0,
+            status: 'PAID',
+            installments: [],
+          },
+        ],
+      },
+    ],
+  },
+} satisfies {
+  summary: StatementSummary
+  paidSummary: StatementSummary
+  detail: AccountStatement
+}
+
+export function createStatementPage(
+  content: StatementSummary[] = [accountStatementFixtures.summary],
+  overrides: Partial<Omit<StatementPage, 'content'>> = {},
+): StatementPage {
+  return {
+    content,
+    page: 0,
+    size: 25,
+    totalElements: content.length,
+    totalPages: content.length > 0 ? 1 : 0,
+    first: true,
+    last: true,
+    ...overrides,
+  }
+}
+
+export const accountStatementHandlers = {
+  getStatementCustomersSuccess(page: StatementPage = createStatementPage()) {
+    return http.get('/api/account-statements/customers', () => HttpResponse.json(page))
+  },
+  getStatementCustomersEmpty() {
+    return http.get('/api/account-statements/customers', () => HttpResponse.json(createStatementPage([])))
+  },
+  getStatementCustomersError() {
+    return http.get('/api/account-statements/customers', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+  getCustomerStatementSuccess(statement: AccountStatement = accountStatementFixtures.detail) {
+    return http.get('/api/account-statements/customers/:id', () => HttpResponse.json(statement))
+  },
+  getCustomerStatementError() {
+    return http.get('/api/account-statements/customers/:id', () => HttpResponse.json({ message: 'Server error' }, { status: 500 }))
+  },
+}
 
 export const customerFixtures = {
   active: {
