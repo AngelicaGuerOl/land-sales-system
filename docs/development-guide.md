@@ -50,14 +50,22 @@ The main repository structure is:
 
 ```text
 land-sales-system/
+├── .github/workflows/ci.yml
 ├── land-sales-backend/
 ├── land-sales-frontend/
 ├── docs/
 ├── docker-compose.yml
 ├── docker-compose.dev.yml
+├── docker-compose.e2e.yml
 ├── .env.example
 ├── Makefile
 └── README.md
+```
+
+The detailed testing documentation is available at:
+
+```text
+docs/testing.md
 ```
 
 ## Environment Configuration
@@ -319,25 +327,18 @@ unless deleting the local database volume is intentional. The `-v` option may pe
 
 ## Backend Verification
 
-Run the backend tests:
+Run full backend verification:
 
 ```bash
 cd land-sales-backend
-./mvnw test
-```
-
-Package the backend:
-
-```bash
-./mvnw package
+./mvnw -B clean verify
 ```
 
 On Windows PowerShell:
 
 ```powershell
 Set-Location land-sales-backend
-.\mvnw.cmd test
-.\mvnw.cmd package
+.\mvnw.cmd -B clean verify
 ```
 
 The backend includes unit and integration test support with:
@@ -359,29 +360,31 @@ Do not run automated tests against a database containing real business data.
 
 ## Frontend Verification
 
-Run lint:
+Run frontend verification:
 
 ```bash
 cd land-sales-frontend
+npm ci
 npm run lint
-```
-
-Run the production build:
-
-```bash
+npm run test
+npm run test:coverage
 npm run build
 ```
 
-The production build verifies:
+This frontend verification sequence checks:
 
+- Code quality through ESLint.
+- Unit, component, and integration behavior through Vitest.
+- Frontend coverage through V8.
 - TypeScript compilation.
 - Module resolution.
 - Vite production bundling.
 - Static asset generation.
 
-The frontend currently does not define an automated test script in `package.json`.
+## Testing and Verification
 
-Do not claim frontend test coverage until automated tests and a coverage report are implemented.
+For backend tests, frontend tests, coverage, Playwright E2E, Docker Compose E2E,
+and GitHub Actions instructions, see the [Testing Guide](testing.md).
 
 ## API Documentation
 
@@ -444,15 +447,19 @@ Run the checks that apply to the modified area.
 
 ```bash
 cd land-sales-backend
-./mvnw test
-./mvnw package
+./mvnw -B clean verify
 ```
 
 ### Frontend changes
 
+Run these checks when the change affects the frontend application or its test
+suite.
+
 ```bash
 cd land-sales-frontend
 npm run lint
+npm run test
+npm run test:coverage
 npm run build
 ```
 
@@ -693,4 +700,5 @@ See [Architecture](architecture.md) for the complete frontend and backend archit
 - [Business Rules](business-rules.md)
 - [Database Design](database.md)
 - [REST API Overview](api-overview.md)
+- [Testing Guide](testing.md)
 - [User Manual](user-manual.md)

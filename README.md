@@ -2,6 +2,8 @@
 
 [English](README.md) | [Español](docs/README.es.md)
 
+[![CI](https://github.com/AngelicaGuerOl/land-sales-system/actions/workflows/ci.yml/badge.svg)](https://github.com/AngelicaGuerOl/land-sales-system/actions/workflows/ci.yml)
+
 A full-stack management system developed for a family-owned land sales business.
 
 It centralizes blocks, lots, customers, financed sales, monthly installments,
@@ -59,6 +61,10 @@ Land Sales System brings these workflows into one authenticated application.
 - PostgreSQL constraints and Flyway migrations for data integrity.
 - `NUMERIC(14,2)` financial fields and backend-controlled calculations.
 - OpenAPI and Swagger UI documentation.
+- Automated frontend testing with Vitest, React Testing Library, and MSW.
+- V8 test coverage and Playwright E2E testing with Chromium.
+- Isolated E2E environment with PostgreSQL, Spring Boot, React, and Docker Compose.
+- CI for backend, frontend, Docker image build, and E2E verification.
 
 ## Technology Stack
 
@@ -67,8 +73,8 @@ Land Sales System brings these workflows into one authenticated application.
 | Backend | Java 17, Spring Boot 4.1.0, Spring MVC, Spring Data JPA, Spring Security, JWT, MapStruct, Flyway, Bean Validation |
 | Frontend | React 19, TypeScript, Vite, Material UI, React Router, TanStack Query, React Hook Form, Zod, AG Grid Community |
 | Database | PostgreSQL 16 |
-| Quality | JUnit, Mockito, Spring Test, Testcontainers, ESLint, TypeScript build |
-| Infrastructure | Docker, Docker Compose, Maven Wrapper, Makefile |
+| Quality | JUnit, Mockito, Spring Test, Testcontainers, Vitest, React Testing Library, MSW, Playwright, V8 Coverage, ESLint |
+| Infrastructure | Docker, Docker Compose, Maven Wrapper, Makefile, GitHub Actions |
 
 ## Architecture
 
@@ -172,24 +178,77 @@ Protected endpoints require a JWT bearer token. See the [REST API Overview](docs
 
 ## Verification
 
-Backend:
+Backend verification from the repository root:
 
 ```bash
 cd land-sales-backend
-./mvnw test
-./mvnw package
+./mvnw -B clean verify
 ```
 
-Frontend:
+This compiles the backend and runs the backend test suite.
+
+Frontend verification from the repository root:
 
 ```bash
 cd land-sales-frontend
 npm ci
 npm run lint
+npm run test
+npm run test:coverage
 npm run build
 ```
 
-The frontend does not currently define an automated test script.
+| Command | Purpose |
+| --- | --- |
+| `npm run lint` | Runs ESLint. |
+| `npm run test` | Runs the frontend test suite with Vitest. |
+| `npm run test:coverage` | Runs frontend tests with V8 coverage. |
+| `npm run build` | Runs TypeScript build and Vite production bundling. |
+
+E2E verification from the repository root:
+
+```bash
+docker compose -f docker-compose.e2e.yml up --build --wait -d
+```
+
+Then run Playwright from `land-sales-frontend/`:
+
+```bash
+cd land-sales-frontend
+npm run test:e2e
+```
+
+Finally, return to the repository root and stop the E2E environment:
+
+```bash
+cd ..
+docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans
+```
+
+See the [Testing Guide](docs/testing.md) for the complete workflow.
+
+## Testing
+
+The project uses a layered testing strategy: backend tests validate services and
+integration behavior, frontend tests cover schemas, components, pages, routing,
+HTTP behavior, and API integration through MSW, and Playwright verifies critical
+browser flows against a real frontend, backend, and PostgreSQL database.
+
+Current verified frontend results:
+
+| Metric | Result |
+| --- | ---: |
+| Test files | 23 |
+| Automated frontend tests | 148 |
+| Statements | 88.12% |
+| Branches | 81.38% |
+| Functions | 84.00% |
+| Lines | 89.69% |
+| Playwright E2E flows | 2 |
+
+These results describe the current suite and should be updated as the project
+evolves. Coverage measures executed code; it does not prove that the application
+is defect-free.
 
 ## Documentation
 
@@ -198,6 +257,7 @@ The frontend does not currently define an automated test script.
 - [Database Design](docs/database.md)
 - [REST API Overview](docs/api-overview.md)
 - [Development Guide](docs/development-guide.md)
+- [Testing Guide](docs/testing.md)
 - [Spanish README](docs/README.es.md)
 - [User Manual](docs/user-manual.md)
 - [Screenshot Guidelines](docs/screenshots/README.md)
@@ -206,7 +266,7 @@ The frontend does not currently define an automated test script.
 
 The project does not currently include online card payments, a customer portal,
 interest or late fees, payment cancellation, electronic invoicing, legally
-binding contract generation, frontend automated tests, or production deployment
+binding contract generation, continuous deployment, or production deployment
 hardening.
 
 ## License
