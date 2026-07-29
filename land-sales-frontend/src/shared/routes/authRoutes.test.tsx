@@ -3,7 +3,6 @@ import type { ReactNode } from 'react'
 import { Link, Route, Routes, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import { AuthContext, type AuthContextValue } from '../../features/auth/ui/hooks/AuthContext'
-import { tokenStorage } from '../lib/storage/tokenStorage'
 import { renderWithProviders } from '../../test/render'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
@@ -17,8 +16,11 @@ function LocationLabel() {
 function authValue(overrides: Partial<AuthContextValue> = {}): AuthContextValue {
   return {
     user: null,
+    hasSession: false,
+    isAuthenticated: false,
     isLoadingUser: false,
     login: vi.fn().mockResolvedValue(undefined),
+    loginDemo: vi.fn().mockResolvedValue(undefined),
     logout: vi.fn(),
     ...overrides,
   }
@@ -47,11 +49,15 @@ describe('ProtectedRoute', () => {
     expect(screen.queryByRole('heading', { name: 'Contenido protegido' })).not.toBeInTheDocument()
   })
 
-  it('renders protected content when a token exists', () => {
-    tokenStorage.setToken('Bearer', 'valid-token')
-
+  it('renders protected content when the auth context has an authenticated session', () => {
     renderWithProviders(
-      <AuthWrapper value={authValue({ user: { id: 1, username: 'admin', fullName: 'Admin User' } })}>
+      <AuthWrapper
+        value={authValue({
+          user: { id: 1, username: 'admin', fullName: 'Admin User' },
+          hasSession: true,
+          isAuthenticated: true,
+        })}
+      >
         <Routes>
           <Route element={<ProtectedRoute />}>
             <Route path="/protegido" element={<h1>Contenido protegido</h1>} />
@@ -69,12 +75,14 @@ describe('ProtectedRoute', () => {
 describe('PublicRoute', () => {
   it('renders public content when there is no token', () => {
     renderWithProviders(
-      <Routes>
-        <Route element={<PublicRoute />}>
-          <Route path={routePaths.login} element={<h1>Ruta pública</h1>} />
-        </Route>
-        <Route path={routePaths.dashboard} element={<h1>Dashboard</h1>} />
-      </Routes>,
+      <AuthWrapper>
+        <Routes>
+          <Route element={<PublicRoute />}>
+            <Route path={routePaths.login} element={<h1>Ruta pública</h1>} />
+          </Route>
+          <Route path={routePaths.dashboard} element={<h1>Dashboard</h1>} />
+        </Routes>
+      </AuthWrapper>,
       { initialEntries: [routePaths.login] },
     )
 
@@ -82,15 +90,21 @@ describe('PublicRoute', () => {
   })
 
   it('redirects authenticated users to the dashboard route', async () => {
-    tokenStorage.setToken('Bearer', 'valid-token')
-
     renderWithProviders(
-      <Routes>
-        <Route element={<PublicRoute />}>
-          <Route path={routePaths.login} element={<><h1>Ruta pública</h1><Link to="/">Inicio</Link></>} />
-        </Route>
-        <Route path={routePaths.dashboard} element={<><h1>Dashboard</h1><LocationLabel /></>} />
-      </Routes>,
+      <AuthWrapper
+        value={authValue({
+          user: { id: 1, username: 'admin', fullName: 'Admin User' },
+          hasSession: true,
+          isAuthenticated: true,
+        })}
+      >
+        <Routes>
+          <Route element={<PublicRoute />}>
+            <Route path={routePaths.login} element={<><h1>Ruta pública</h1><Link to="/">Inicio</Link></>} />
+          </Route>
+          <Route path={routePaths.dashboard} element={<><h1>Dashboard</h1><LocationLabel /></>} />
+        </Routes>
+      </AuthWrapper>,
       { initialEntries: [routePaths.login] },
     )
 

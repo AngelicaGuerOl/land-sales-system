@@ -96,6 +96,8 @@ class LandSalesBackendApplicationTests {
         registry.add("app.bootstrap-admin.username", () -> "");
         registry.add("app.bootstrap-admin.password", () -> "");
         registry.add("app.bootstrap-admin.full-name", () -> "");
+        registry.add("app.demo.enabled", () -> "true");
+        registry.add("app.demo.username", () -> "demo");
     }
 
     @BeforeEach
@@ -110,6 +112,8 @@ class LandSalesBackendApplicationTests {
         User activeUser = user("admin", "Admin User", "password", true);
         userRepository.save(activeUser);
         userRepository.save(user("inactive", "Inactive User", "password", false));
+        userRepository.save(user("demo", "Demo User", "demo-password", true));
+        userRepository.save(user("inactive-demo", "Inactive Demo User", "demo-password", false));
 
         Lotification lotification = new Lotification();
         lotification.setName("Lotificacion Norte");
@@ -189,6 +193,18 @@ class LandSalesBackendApplicationTests {
                         .content(json(Map.of("username", "inactive", "password", "password"))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Unauthorized"));
+    }
+
+    @Test
+    void demoLoginSucceedsWhenEnabledAndUserIsActive() throws Exception {
+        mockMvc.perform(post("/api/auth/demo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.accessToken").isString())
+                .andExpect(jsonPath("$.user.username").value("demo"))
+                .andExpect(content().string(not(containsString("password"))))
+                .andExpect(content().string(not(containsString("passwordHash"))))
+                .andExpect(content().string(not(containsString("password_hash"))));
     }
 
     @Test

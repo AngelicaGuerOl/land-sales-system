@@ -7,6 +7,7 @@ import com.angelica.landsalesbackend.auth.exception.InvalidCredentialsException;
 import com.angelica.landsalesbackend.auth.mapper.AuthMapper;
 import com.angelica.landsalesbackend.security.AuthenticatedUser;
 import com.angelica.landsalesbackend.security.JwtService;
+import com.angelica.landsalesbackend.shared.exception.ResourceNotFoundException;
 import com.angelica.landsalesbackend.shared.exception.UnauthorizedException;
 import com.angelica.landsalesbackend.user.entity.User;
 import com.angelica.landsalesbackend.user.repository.UserRepository;
@@ -22,17 +23,20 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthMapper authMapper;
+    private final DemoAccessProperties demoAccessProperties;
 
     public AuthServiceImpl(
             UserRepository userRepository,
             PasswordEncoder passwordEncoder,
             JwtService jwtService,
-            AuthMapper authMapper
+            AuthMapper authMapper,
+            DemoAccessProperties demoAccessProperties
     ) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authMapper = authMapper;
+        this.demoAccessProperties = demoAccessProperties;
     }
 
     @Override
@@ -43,6 +47,27 @@ public class AuthServiceImpl implements AuthService {
                 .filter(candidate -> passwordEncoder.matches(request.password(), candidate.getPasswordHash()))
                 .orElseThrow(InvalidCredentialsException::new);
 
+        return createSession(user);
+    }
+
+    @Override
+    @Transactional
+    public LoginResponse loginDemo() {
+        if (!demoAccessProperties.enabled()) {
+            throw new ResourceNotFoundException("Resource not found");
+        }
+        if (!demoAccessProperties.hasUsername()) {
+            throw new InvalidCredentialsException();
+        }
+
+        User user = userRepository.findByUsername(demoAccessProperties.username())
+                .filter(User::isActive)
+                .orElseThrow(InvalidCredentialsException::new);
+
+        return createSession(user);
+    }
+
+    private LoginResponse createSession(User user) {
         user.setLastLoginAt(OffsetDateTime.now());
         String token = jwtService.createToken(user);
 

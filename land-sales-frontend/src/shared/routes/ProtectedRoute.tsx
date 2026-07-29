@@ -1,19 +1,18 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../features/auth'
-import { tokenStorage } from '../lib/storage/tokenStorage'
 import { LoadingScreen } from '../ui/components/LoadingScreen'
 import { routePaths } from './routePaths'
 
 export function ProtectedRoute() {
   const location = useLocation()
-  const { isLoadingUser } = useAuth()
+  const { hasSession, isAuthenticated, isLoadingUser } = useAuth()
 
-  if (!tokenStorage.getToken()) {
-    return <Navigate to={routePaths.login} replace state={{ from: location }} />
+  if (hasSession && isLoadingUser) {
+    return <LoadingScreen message="Validando sesión..." />
   }
 
-  if (isLoadingUser) {
-    return <LoadingScreen message="Validando sesión..." />
+  if (!isAuthenticated) {
+    return <Navigate to={routePaths.login} replace state={{ from: location }} />
   }
 
   return <Outlet />

@@ -55,3 +55,6 @@ app:
     password: ${BOOTSTRAP_ADMIN_PASSWORD:}
     full-name: ${BOOTSTRAP_ADMIN_FULL_NAME:}
 
+  demo:
+    enabled: ${APP_DEMO_ENABLED:false}
+    username: ${APP_DEMO_USERNAME:}
