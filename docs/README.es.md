@@ -2,6 +2,8 @@
 
 [English](../README.md) | [Español](README.es.md)
 
+[![CI](https://github.com/AngelicaGuerOl/land-sales-system/actions/workflows/ci.yml/badge.svg)](https://github.com/AngelicaGuerOl/land-sales-system/actions/workflows/ci.yml)
+
 Sistema full stack desarrollado para un negocio familiar dedicado a la venta de
 terrenos.
 
@@ -61,6 +63,10 @@ Land Sales System reúne estos flujos en una aplicación autenticada.
 - Restricciones PostgreSQL y migraciones Flyway para integridad de datos.
 - Campos financieros `NUMERIC(14,2)` y cálculos controlados por el backend.
 - Documentación OpenAPI y Swagger UI.
+- Pruebas frontend con Vitest, React Testing Library y MSW.
+- Cobertura V8 y pruebas E2E con Playwright y Chromium.
+- Entorno E2E aislado con Docker Compose.
+- CI con GitHub Actions para backend, frontend, Docker y E2E.
 
 ## Tecnologías
 
@@ -69,8 +75,8 @@ Land Sales System reúne estos flujos en una aplicación autenticada.
 | Backend | Java 17, Spring Boot 4.1.0, Spring MVC, Spring Data JPA, Spring Security, JWT, MapStruct, Flyway y Bean Validation |
 | Frontend | React 19, TypeScript, Vite, Material UI, React Router, TanStack Query, React Hook Form, Zod y AG Grid Community |
 | Base de datos | PostgreSQL 16 |
-| Calidad | JUnit, Mockito, Spring Test, Testcontainers, ESLint y compilación TypeScript |
-| Infraestructura | Docker, Docker Compose, Maven Wrapper y Makefile |
+| Calidad | JUnit, Mockito, Spring Test, Testcontainers, Vitest, React Testing Library, MSW, Playwright, cobertura V8 y ESLint |
+| Infraestructura | Docker, Docker Compose, Maven Wrapper, Makefile y GitHub Actions |
 
 ## Arquitectura
 
@@ -174,24 +180,66 @@ Los endpoints protegidos requieren un token bearer JWT. Consulta el [Resumen de 
 
 ## Verificación
 
-Backend:
+Backend desde la raíz del repositorio:
 
 ```bash
 cd land-sales-backend
-./mvnw test
-./mvnw package
+./mvnw -B clean verify
 ```
 
-Frontend:
+Frontend desde la raíz del repositorio:
 
 ```bash
 cd land-sales-frontend
 npm ci
 npm run lint
+npm run test
+npm run test:coverage
 npm run build
 ```
 
-Actualmente el frontend no define un script de pruebas automatizadas.
+E2E desde la raíz del repositorio:
+
+```bash
+docker compose -f docker-compose.e2e.yml up --build --wait -d
+```
+
+Luego ejecuta Playwright desde `land-sales-frontend/`:
+
+```bash
+cd land-sales-frontend
+npm run test:e2e
+```
+
+Finalmente, vuelve a la raíz del repositorio y apaga el entorno E2E:
+
+```bash
+cd ..
+docker compose -f docker-compose.e2e.yml down --volumes --remove-orphans
+```
+
+La guía técnica detallada está en inglés en la [Guía de testing](testing.md).
+
+## Testing
+
+La estrategia combina pruebas backend, pruebas frontend por módulos, simulación
+de API con MSW, cobertura V8 y flujos E2E con Playwright.
+
+Resultados actuales verificados:
+
+| Métrica | Resultado |
+| --- | ---: |
+| Archivos de pruebas frontend | 23 |
+| Pruebas frontend automatizadas | 148 |
+| Statements | 88.12% |
+| Branches | 81.38% |
+| Functions | 84.00% |
+| Lines | 89.69% |
+| Flujos E2E Playwright | 2 |
+
+Estos resultados corresponden al estado actual de la suite y deben actualizarse
+cuando cambien las pruebas. La cobertura mide código ejecutado; no garantiza la
+ausencia total de defectos.
 
 ## Documentación
 
@@ -200,6 +248,7 @@ Actualmente el frontend no define un script de pruebas automatizadas.
 - [Diseño de base de datos](database.md)
 - [Resumen de la API REST](api-overview.md)
 - [Guía de desarrollo](development-guide.md)
+- [Guía de testing](testing.md)
 - [Manual de usuario](user-manual.md)
 - [Guía de capturas](screenshots/README.md)
 - [README principal en inglés](../README.md)
@@ -208,8 +257,8 @@ Actualmente el frontend no define un script de pruebas automatizadas.
 
 Actualmente el proyecto no incluye pagos con tarjeta en línea, portal para
 clientes, intereses o mora, cancelación de pagos, facturación electrónica,
-generación de contratos legales, pruebas automatizadas del frontend ni
-endurecimiento de despliegue para producción.
+generación de contratos legales, despliegue continuo ni endurecimiento de
+despliegue para producción.
 
 ## Licencia
 
