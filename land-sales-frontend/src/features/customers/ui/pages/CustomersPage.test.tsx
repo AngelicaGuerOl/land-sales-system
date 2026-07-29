@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse, delay } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
@@ -60,6 +60,38 @@ function getButton(name: string) {
   const button = screen.getByText(name).closest('button')
   expect(button).not.toBeNull()
   return button as HTMLButtonElement
+}
+
+function setTextField(label: RegExp, value: string) {
+  const input = screen.getByLabelText(label)
+  fireEvent.change(input, { target: { value } })
+  expect(input).toHaveValue(value)
+  return input
+}
+
+async function replaceTextField(label: RegExp, initialValue: string, value: string) {
+  const input = screen.getByLabelText(label)
+
+  await waitFor(() => {
+    expect(input).toHaveValue(initialValue)
+  })
+
+  fireEvent.change(input, { target: { value: '' } })
+  expect(input).toHaveValue('')
+
+  fireEvent.change(input, { target: { value } })
+  expect(input).toHaveValue(value)
+
+  return input
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void
+  const promise = new Promise<T>((resolver) => {
+    resolve = resolver
+  })
+
+  return { promise, resolve }
 }
 
 describe('CustomersPage', () => {
@@ -142,15 +174,18 @@ describe('CustomersPage', () => {
   it('creates a customer and refreshes the list after success', async () => {
     const user = userEvent.setup()
     let listRequests = 0
-    let receivedBody: unknown
+    const postReceived = deferred<unknown>()
+    const listRefetched = deferred<number>()
 
     server.use(
       http.get('/api/customers', () => {
         listRequests += 1
+        if (listRequests > 1) listRefetched.resolve(listRequests)
         return HttpResponse.json(createCustomerPage([]))
       }),
       http.post('/api/customers', async ({ request }) => {
-        receivedBody = await request.json()
+        const body = await request.json()
+        postReceived.resolve(body)
         return HttpResponse.json(customerFixtures.active, { status: 201 })
       }),
     )
@@ -159,24 +194,23 @@ describe('CustomersPage', () => {
     await screen.findByText('Sin resultados')
 
     await user.click(getButton('Registrar cliente'))
-    await user.type(screen.getByLabelText(/Nombre completo/i), '  Ana Lopez  ')
-    await user.type(screen.getByLabelText(/Teléfono principal/i), '5551234567')
+    expect(await screen.findByLabelText(/Nombre completo/i)).toBeEnabled()
+    setTextField(/Nombre completo/i, '  Ana Lopez  ')
+    setTextField(/Teléfono principal/i, '5551234567')
 
     await waitFor(() => {
       expect(getButton('Guardar cliente')).toBeEnabled()
     })
     await user.click(getButton('Guardar cliente'))
 
-    expect(await screen.findByText('Cliente guardado correctamente.')).toBeInTheDocument()
-    expect(receivedBody).toEqual({
+    await expect(postReceived.promise).resolves.toEqual({
       fullName: 'Ana Lopez',
       phone: '5551234567',
       alternatePhone: null,
       address: null,
     })
-    await waitFor(() => {
-      expect(listRequests).toBeGreaterThan(1)
-    })
+    expect(await screen.findByText('Cliente guardado correctamente.')).toBeInTheDocument()
+    await expect(listRefetched.promise).resolves.toBeGreaterThan(1)
   })
 
   it('opens the form to edit a customer and sends the update to the customer endpoint', async () => {
@@ -199,8 +233,7 @@ describe('CustomersPage', () => {
     await user.click(getButton('Editar a Ana Lopez'))
     expect(screen.getByText('Editar cliente')).toBeInTheDocument()
 
-    await user.clear(screen.getByLabelText(/Nombre completo/i))
-    await user.type(screen.getByLabelText(/Nombre completo/i), 'Ana Editada')
+    await replaceTextField(/Nombre completo/i, 'Ana Lopez', 'Ana Editada')
     await user.click(getButton('Guardar cambios'))
 
     expect(await screen.findByText('Cliente guardado correctamente.')).toBeInTheDocument()
@@ -264,8 +297,7 @@ describe('CustomersPage', () => {
     await screen.findByText('Ana Lopez')
 
     await user.click(getButton('Editar a Ana Lopez'))
-    await user.clear(screen.getByLabelText(/Teléfono principal/i))
-    await user.type(screen.getByLabelText(/Teléfono principal/i), '5550000000')
+    await replaceTextField(/Teléfono principal/i, '5551234567', '5550000000')
     await user.click(getButton('Guardar cambios'))
 
     expect(await screen.findByText('El teléfono ya está registrado.')).toBeInTheDocument()

@@ -23,6 +23,7 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
+      exclude: ['e2e/**', 'node_modules/**', 'dist/**', 'coverage/**'],
       clearMocks: true,
       restoreMocks: true,
       coverage: {
@@ -31,6 +32,7 @@ export default defineConfig(({ mode }) => {
         exclude: [
           'dist/**',
           'coverage/**',
+          'e2e/**',
           'node_modules/**',
           '*.config.*',
           'src/test/**',
