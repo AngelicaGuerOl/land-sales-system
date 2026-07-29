@@ -1,0 +1,71 @@
+name: land-sales-e2e
+
+services:
+  e2e-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: land_sales_e2e
+      POSTGRES_USER: land_sales_e2e
+      POSTGRES_PASSWORD: land_sales_e2e_password
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - land-sales-e2e-network
+
+  backend:
+    build:
+      context: ./land-sales-backend
+      dockerfile: Dockerfile
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://e2e-db:5432/land_sales_e2e
+      SPRING_DATASOURCE_USERNAME: land_sales_e2e
+      SPRING_DATASOURCE_PASSWORD: land_sales_e2e_password
+      JWT_SECRET: land-sales-e2e-jwt-secret-minimum-32-characters
+      JWT_EXPIRATION: PT2H
+      BOOTSTRAP_ADMIN_USERNAME: e2e-admin
+      BOOTSTRAP_ADMIN_PASSWORD: e2e-admin-password
+      BOOTSTRAP_ADMIN_FULL_NAME: E2E Administrator
+    ports:
+      - "127.0.0.1:${E2E_BACKEND_PORT:-8080}:8080"
+    depends_on:
+      e2e-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    networks:
+      - land-sales-e2e-network
+
+  frontend:
+    build:
+      context: ./land-sales-frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_API_BASE_URL: /api
+      VITE_API_PROXY_TARGET: http://backend:8080
+      CHOKIDAR_USEPOLLING: "true"
+    ports:
+      - "127.0.0.1:${E2E_FRONTEND_PORT:-5173}:5173"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5173 >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      - land-sales-e2e-network
+
+networks:
+  land-sales-e2e-network:
+    driver: bridge

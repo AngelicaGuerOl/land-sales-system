@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { customerFixtures } from '../../../../test/handlers'
@@ -36,9 +36,27 @@ function getButton(name: string) {
   return button as HTMLButtonElement
 }
 
-async function fillRequiredCustomerFields(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText(/Nombre completo/i), '  Laura Martinez  ')
-  await user.type(screen.getByLabelText(/Teléfono principal/i), ' 5551234567 ')
+function setTextField(label: RegExp, value: string) {
+  const input = screen.getByLabelText(label)
+  fireEvent.change(input, { target: { value } })
+  expect(input).toHaveValue(value)
+  return input
+}
+
+async function replaceTextField(label: RegExp, initialValue: string, value: string) {
+  const input = screen.getByLabelText(label)
+
+  await waitFor(() => {
+    expect(input).toHaveValue(initialValue)
+  })
+
+  fireEvent.change(input, { target: { value: '' } })
+  expect(input).toHaveValue('')
+
+  fireEvent.change(input, { target: { value } })
+  expect(input).toHaveValue(value)
+
+  return input
 }
 
 describe('CustomerFormDialog', () => {
@@ -73,9 +91,10 @@ describe('CustomerFormDialog', () => {
     const onSubmit = vi.fn()
     renderCustomerFormDialog({ onSubmit })
 
-    await fillRequiredCustomerFields(user)
-    await user.type(screen.getByLabelText(/Teléfono alternativo/i), ' ')
-    await user.type(screen.getByLabelText(/Domicilio completo/i), '  Calle Sur 200  ')
+    setTextField(/Nombre completo/i, '  Laura Martinez  ')
+    setTextField(/Teléfono principal/i, ' 5551234567 ')
+    setTextField(/Teléfono alternativo/i, ' ')
+    setTextField(/Domicilio completo/i, '  Calle Sur 200  ')
 
     await waitFor(() => {
       expect(getButton('Guardar cliente')).toBeEnabled()
@@ -108,8 +127,10 @@ describe('CustomerFormDialog', () => {
     const onSubmit = vi.fn()
     renderCustomerFormDialog({ customer: customerFixtures.active, onSubmit })
 
-    await user.clear(screen.getByLabelText(/Nombre completo/i))
-    await user.type(screen.getByLabelText(/Nombre completo/i), '  Ana Actualizada  ')
+    await replaceTextField(/Nombre completo/i, 'Ana Lopez', '  Ana Actualizada  ')
+    await waitFor(() => {
+      expect(getButton('Guardar cambios')).toBeEnabled()
+    })
     await user.click(getButton('Guardar cambios'))
 
     expect(onSubmit).toHaveBeenCalledWith({

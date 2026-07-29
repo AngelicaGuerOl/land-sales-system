@@ -99,3 +99,80 @@ jobs:
           load: false
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  e2e:
+    name: E2E verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - backend
+      - frontend
+    defaults:
+      run:
+        working-directory: land-sales-frontend
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: land-sales-frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Validate E2E Compose file
+        working-directory: .
+        run: docker compose -f docker-compose.e2e.yml config
+
+      - name: Start E2E environment
+        working-directory: .
+        run: docker compose -f docker-compose.e2e.yml up --build --wait -d
+
+      - name: Run E2E tests
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:5173
+          E2E_ADMIN_USERNAME: e2e-admin
+          E2E_ADMIN_PASSWORD: e2e-admin-password
+        run: npm run test:e2e
+
+      - name: Collect E2E logs
+        if: failure()
+        working-directory: .
+        run: docker compose -f docker-compose.e2e.yml logs --no-color > e2e-docker-logs.txt
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: land-sales-frontend/playwright-report/
+          if-no-files-found: ignore
+
+      - name: Upload Playwright test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: land-sales-frontend/test-results/
+          if-no-files-found: ignore
+
+      - name: Upload E2E Docker logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-docker-logs
+          path: e2e-docker-logs.txt
+          if-no-files-found: ignore
+
+      - name: Stop E2E environment
+        if: always()
+        working-directory: .
+        run: docker compose -f docker-compose.e2e.yml down --remove-orphans
