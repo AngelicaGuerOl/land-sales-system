@@ -14,7 +14,8 @@ The recommended development setup uses:
 
 The development Docker Compose configuration does not include a backend container.
 
-This guide covers local development. Production deployment hardening is outside the currently documented scope.
+This guide covers local development. Public demo deployment details are
+documented separately in the [Deployment Guide](deployment.md).
 
 ## Prerequisites
 
@@ -68,6 +69,12 @@ The detailed testing documentation is available at:
 docs/testing.md
 ```
 
+The public demo deployment documentation is available at:
+
+```text
+docs/deployment.md
+```
+
 ## Environment Configuration
 
 The repository uses a root `.env` file for local configuration.
@@ -88,20 +95,35 @@ Copy-Item .env.example .env
 
 The template contains configuration for:
 
-- PostgreSQL.
-- Backend and frontend ports.
-- Vite API communication.
+- Local PostgreSQL.
+- Backend, frontend, PostgreSQL, and pgAdmin ports.
+- Vite API base URL and development proxy target.
 - pgAdmin.
 - JWT authentication.
+- CORS allowed origins.
 - Bootstrap administrator creation.
+- Demo access.
+- Reference-plan image path.
 
 Replace all placeholder passwords and JWT values before starting the application.
+
+Safe local defaults:
+
+- `APP_DEMO_ENABLED=false` keeps demo access disabled unless you explicitly
+  enable it.
+- `APP_DEMO_USERNAME` can stay empty while demo access is disabled.
+- `VITE_REFERENCE_PLAN_IMAGE_URL` can be omitted because the frontend defaults
+  to `/images/reference-plan/plan-reference-demo.png`.
+- To use a private local reference plan, place the private file under
+  `land-sales-frontend/public/reference/` and set
+  `VITE_REFERENCE_PLAN_IMAGE_URL` to its public path.
 
 Never commit:
 
 - `.env`
 - Database passwords
 - JWT secrets
+- Private reference-plan files
 - Real customer information
 - Real sales or payment data
 
@@ -191,6 +213,16 @@ The backend starts at:
 ```text
 http://localhost:8080
 ```
+
+Verify local liveness:
+
+```bash
+curl http://localhost:8080/actuator/health/liveness
+```
+
+The Dockerfile and E2E Compose configuration may still use
+`/actuator/health` for local container health checks. Render uses
+`/actuator/health/liveness`.
 
 During startup:
 
@@ -385,6 +417,9 @@ This frontend verification sequence checks:
 
 For backend tests, frontend tests, coverage, Playwright E2E, Docker Compose E2E,
 and GitHub Actions instructions, see the [Testing Guide](testing.md).
+
+For Cloudflare, Render, Neon, demo access, and deployment environment variables,
+see the [Deployment Guide](deployment.md).
 
 ## API Documentation
 

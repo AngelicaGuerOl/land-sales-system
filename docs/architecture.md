@@ -37,6 +37,31 @@ flowchart LR
     Flyway --> Database
 ```
 
+### Public Deployment Architecture
+
+The public portfolio demo uses external hosting providers:
+
+```mermaid
+flowchart LR
+    Browser[Browser]
+    Cloudflare[Cloudflare Workers Static Assets<br/>React frontend]
+    Render[Render Web Service<br/>Spring Boot API]
+    Neon[(Neon<br/>PostgreSQL)]
+    GitHub[GitHub Repository]
+    Actions[GitHub Actions<br/>CI verification]
+
+    Browser --> Cloudflare
+    Cloudflare -->|HTTPS /api requests| Render
+    Render -->|JDBC| Neon
+    GitHub -->|CI verification| Actions
+    GitHub -->|Provider integration / auto deploy| Cloudflare
+    GitHub -->|Provider integration / auto deploy| Render
+```
+
+GitHub Actions verifies backend, frontend, Docker, and E2E behavior. It does
+not deploy to Cloudflare, Render, or Neon. Cloudflare and Render deployments are
+managed by their own GitHub integrations and may run independently from CI.
+
 ## Architectural Principles
 
 The application follows these principles:
@@ -160,6 +185,16 @@ The reference-plan feature is intentionally implemented as a smaller UI-focused 
 
 This avoids unnecessary abstractions in simple features.
 
+The public demo uses a versioned fictitious reference-plan image at:
+
+```text
+/images/reference-plan/plan-reference-demo.png
+```
+
+The real reference plan is private and is not stored in the repository.
+`VITE_REFERENCE_PLAN_IMAGE_URL` can override the image path for local or
+provider-specific deployments.
+
 ## Backend Architecture
 
 The backend runs on Java 17 and Spring Boot 4.1.0.
@@ -225,7 +260,12 @@ Repositories remain focused on persistence and query operations.
 
 Spring Security protects the backend API through JWT authentication.
 
-The login endpoint is publicly accessible. Other protected application requests require a valid bearer token.
+The public authentication endpoints are:
+
+- `POST /api/auth/login`
+- `POST /api/auth/demo`
+
+Other business API requests require a valid bearer token.
 
 ```mermaid
 sequenceDiagram
@@ -251,6 +291,58 @@ sequenceDiagram
 The JWT filter validates the token and confirms that its associated user remains active before the request reaches a protected controller.
 
 Frontend route guards are not treated as a security boundary.
+
+### Reactive Authentication State
+
+The frontend stores the JWT in browser storage, but route decisions do not rely
+only on a one-time storage read.
+
+`AuthProvider` keeps reactive authentication state:
+
+- `hasSession` indicates that a stored session exists.
+- `isAuthenticated` requires both a session and a validated current user.
+- TanStack Query stores the current authenticated user.
+
+Normal login and demo login use the same session-application flow:
+
+1. Store the token.
+2. Update React authentication state.
+3. Store the authenticated user in TanStack Query cache.
+4. Navigate to the dashboard.
+
+This avoids requiring a manual page reload after login. A `401` from protected
+requests clears the session centrally. Public authentication requests such as
+login and demo access use `skipAuth`, so their own `401` responses do not
+trigger a global logout loop.
+
+Authentication requests use a bounded timeout. During Render cold starts, the
+login UI shows loading feedback and an informational server-starting message
+instead of leaving the user on an indefinite loading screen.
+
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Login as React Login
+    participant API as POST /api/auth/demo
+    participant Security as Spring Security
+    participant Auth as Auth Service
+    participant Users as User Repository
+    participant JWT as JWT Service
+    participant Provider as AuthProvider
+    participant Dashboard
+
+    Browser->>Login: Select Explore Demo
+    Login->>API: Request demo session
+    API->>Security: Public endpoint
+    Security->>Auth: Delegate demo authentication
+    Auth->>Users: Find configured active user
+    Auth->>JWT: Generate token
+    JWT-->>Auth: JWT
+    Auth-->>Login: Session response
+    Login->>Provider: Apply session
+    Provider->>Provider: Store token and user cache
+    Provider->>Dashboard: Navigate without reload
+```
 
 ## Request and Response Flow
 
@@ -557,4 +649,5 @@ The selected architecture provides project-specific benefits:
 - [Database Design](database.md)
 - [REST API Overview](api-overview.md)
 - [Development Guide](development-guide.md)
+- [Deployment Guide](deployment.md)
 - [User Manual](user-manual.md)

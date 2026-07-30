@@ -127,7 +127,8 @@ architecture.
 
 Current frontend tests cover:
 
-- Authentication: login behavior, validation, pending state, and errors.
+- Authentication: normal login, demo login, validation, pending state, cold-start
+  messaging, session state synchronization, and errors.
 - Protected and public routes: redirect behavior with and without a token.
 - HTTP client: authorization header, `skipAuth`, API errors, and `401` handling.
 - Customers: validation, create/edit forms, listing, search, status changes,
@@ -182,10 +183,10 @@ Current verified frontend coverage:
 
 | Metric | Result |
 | --- | ---: |
-| Statements | 88.12% |
-| Branches | 81.38% |
-| Functions | 84.00% |
-| Lines | 89.69% |
+| Statements | 89.97% |
+| Branches | 82.62% |
+| Functions | 86.12% |
+| Lines | 92.25% |
 
 Coverage does not prove that the application is free of defects. The project
 does not currently enforce coverage thresholds. The goal is meaningful behavior
@@ -238,6 +239,9 @@ Default local addresses:
 | Frontend | `http://localhost:5173` |
 | Backend | `http://localhost:8080` |
 | Backend health | `http://localhost:8080/actuator/health` |
+
+The E2E and local Docker health check uses `/actuator/health`. The public
+Render service uses `/actuator/health/liveness` as its Health Check Path.
 
 Relevant E2E variables:
 
@@ -371,8 +375,10 @@ available through the local script.
   fails.
 - Always stops the E2E environment.
 
-GitHub Actions is used for CI only. It does not deploy to Render, Cloudflare, or
-any cloud platform.
+GitHub Actions is used for repository verification. The workflow does not
+publish Docker images and does not deploy to Render, Cloudflare, Neon, or any
+cloud platform. Public demo deployments are configured through the external
+provider dashboards documented in the [Deployment Guide](deployment.md).
 
 ## Failure Artifacts
 
@@ -400,12 +406,12 @@ startup/runtime issues.
 
 | Verification | Current result |
 | --- | --- |
-| Frontend test files | 23 |
-| Frontend tests | 148 passed |
-| Statement coverage | 88.12% |
-| Branch coverage | 81.38% |
-| Function coverage | 84.00% |
-| Line coverage | 89.69% |
+| Frontend test files | 24 |
+| Frontend tests | 162 passed |
+| Statement coverage | 89.97% |
+| Branch coverage | 82.62% |
+| Function coverage | 86.12% |
+| Line coverage | 92.25% |
 | Playwright flows | 2 passed |
 | ESLint | Passed |
 | Production build | Passed |
@@ -451,6 +457,9 @@ docker compose -f docker-compose.e2e.yml logs e2e-db
 docker compose -f docker-compose.e2e.yml ps
 curl http://localhost:8080/actuator/health
 ```
+
+This checks the local E2E Docker health endpoint. For the public Render
+deployment, use `/actuator/health/liveness`.
 
 ### Open the Playwright report
 

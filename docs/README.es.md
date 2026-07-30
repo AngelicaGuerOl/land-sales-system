@@ -15,6 +15,18 @@ El proyecto está basado en una necesidad real de negocio y demuestra desarrollo
 full stack con React, Spring Boot, PostgreSQL, flujos financieros transaccionales
 y APIs REST protegidas con JWT.
 
+## Demo pública
+
+Prueba la aplicación desplegada:
+
+**Demo:** https://land-sales-system.angelica-guerrero.workers.dev/
+
+Selecciona **Explorar la demo** para entrar con una cuenta preparada y datos
+ficticios.
+
+> La demo utiliza infraestructura gratuita. La primera solicitud después de un
+> periodo sin uso puede tardar unos segundos mientras inicia el backend.
+
 ## Vista previa
 
 | Estado de cuenta | Administración de lotes |
@@ -50,7 +62,8 @@ Land Sales System reúne estos flujos en una aplicación autenticada.
 - Consultar estados de cuenta e historial de pagos.
 - Generar recibos HTML imprimibles.
 - Consultar reportes de ventas y pagos por periodo.
-- Mostrar el plano local cuando sus recursos privados estén disponibles.
+- Mostrar el plano de referencia. Los archivos privados reales no forman parte
+  del repositorio y la demo pública usa una imagen ficticia y sanitizada.
 
 ## Aspectos técnicos destacados
 
@@ -67,6 +80,7 @@ Land Sales System reúne estos flujos en una aplicación autenticada.
 - Cobertura V8 y pruebas E2E con Playwright y Chromium.
 - Entorno E2E aislado con Docker Compose.
 - CI con GitHub Actions para backend, frontend, Docker y E2E.
+- Demo pública desplegada con Cloudflare Workers Static Assets, Render y Neon.
 
 ## Tecnologías
 
@@ -77,6 +91,7 @@ Land Sales System reúne estos flujos en una aplicación autenticada.
 | Base de datos | PostgreSQL 16 |
 | Calidad | JUnit, Mockito, Spring Test, Testcontainers, Vitest, React Testing Library, MSW, Playwright, cobertura V8 y ESLint |
 | Infraestructura | Docker, Docker Compose, Maven Wrapper, Makefile y GitHub Actions |
+| Despliegue | Cloudflare Workers Static Assets, Render y Neon |
 
 ## Arquitectura
 
@@ -96,6 +111,33 @@ Controller → Service → Repository → PostgreSQL
 La capa de servicios concentra las reglas de negocio, cálculos financieros,
 transacciones, cambios de estado y coordinación de concurrencia.
 
+## Despliegue
+
+El despliegue público es una demo de portafolio, no una instalación productiva
+para operar datos reales del negocio.
+
+| Capa | Despliegue público |
+| --- | --- |
+| Frontend | Cloudflare Workers Static Assets |
+| API backend | Render con Spring Boot |
+| Base de datos | PostgreSQL administrado en Neon |
+| Verificación | GitHub Actions para backend, frontend, Docker y E2E |
+
+El frontend desplegado consume:
+
+- API base: `https://land-sales-api.onrender.com/api`
+- Liveness check de Render: `https://land-sales-api.onrender.com/actuator/health/liveness`
+- Health general: `https://land-sales-api.onrender.com/actuator/health`
+
+El backend se configura mediante variables de entorno para PostgreSQL, JWT,
+CORS, administrador inicial y acceso demo. GitHub Actions verifica el código en
+pull requests y pushes a `main`, pero no despliega la aplicación. Los
+despliegues de Cloudflare y Render se administran mediante sus integraciones
+externas con GitHub.
+
+Consulta la [Guía de despliegue](deployment.md) para variables, flujo de
+despliegue y notas operativas.
+
 ## Reglas principales de negocio
 
 - Una venta puede contener uno o varios lotes.
@@ -107,7 +149,7 @@ transacciones, cambios de estado y coordinación de concurrencia.
 - Solo la última mensualidad seleccionada puede recibir un pago parcial.
 - El lote físico permanece en estado `SOLD` después de liquidar su financiamiento.
 - Los números de pago son consecutivos, sin prefijos ni ceros a la izquierda.
-- Los folios de venta utilizan el formato técnico `VTA-AAAA-######`.
+- Los números de venta son enteros positivos consecutivos, sin prefijos ni ceros a la izquierda.
 
 Consulta las [Reglas de negocio](business-rules.md) para ver el detalle completo.
 
@@ -160,15 +202,13 @@ La configuración Docker de desarrollo no incluye un contenedor para el backend.
 
 ### Recursos del plano de referencia
 
-Los archivos originales del plano están excluidos de Git porque contienen
-información privada del negocio. Para utilizar la función localmente, coloca
-estos archivos en `land-sales-frontend/public/reference/`:
-
-- `plano-lotificacion.pdf`
-- `plano-lotificacion.webp`
-- `plano-lotificacion-recortado.webp`
-
-La aplicación muestra un mensaje alternativo cuando la imagen no está disponible.
+Los archivos reales del plano están excluidos de Git porque contienen
+información privada del negocio. Un archivo privado local puede colocarse en
+`land-sales-frontend/public/reference/`, pero solo se usa si
+`VITE_REFERENCE_PLAN_IMAGE_URL` apunta a su ruta pública. La demo usa por
+defecto la imagen ficticia versionada en
+`land-sales-frontend/public/images/reference-plan/plan-reference-demo.png`,
+servida desde `/images/reference-plan/plan-reference-demo.png`.
 
 ## Documentación de la API
 
@@ -229,12 +269,12 @@ Resultados actuales verificados:
 
 | Métrica | Resultado |
 | --- | ---: |
-| Archivos de pruebas frontend | 23 |
-| Pruebas frontend automatizadas | 148 |
-| Statements | 88.12% |
-| Branches | 81.38% |
-| Functions | 84.00% |
-| Lines | 89.69% |
+| Archivos de pruebas frontend | 24 |
+| Pruebas frontend automatizadas | 162 |
+| Statements | 89.97% |
+| Branches | 82.62% |
+| Functions | 86.12% |
+| Lines | 92.25% |
 | Flujos E2E Playwright | 2 |
 
 Estos resultados corresponden al estado actual de la suite y deben actualizarse
@@ -248,6 +288,7 @@ ausencia total de defectos.
 - [Diseño de base de datos](database.md)
 - [Resumen de la API REST](api-overview.md)
 - [Guía de desarrollo](development-guide.md)
+- [Guía de despliegue](deployment.md)
 - [Guía de testing](testing.md)
 - [Manual de usuario](user-manual.md)
 - [Guía de capturas](screenshots/README.md)
@@ -257,8 +298,10 @@ ausencia total de defectos.
 
 Actualmente el proyecto no incluye pagos con tarjeta en línea, portal para
 clientes, intereses o mora, cancelación de pagos, facturación electrónica,
-generación de contratos legales, despliegue continuo ni endurecimiento de
-despliegue para producción.
+generación de contratos legales ni endurecimiento de despliegue para producción.
+
+El despliegue público es una demo de portafolio sobre infraestructura gratuita y
+no está configurado como entorno productivo para operaciones reales del negocio.
 
 ## Licencia
 
