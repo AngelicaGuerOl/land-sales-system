@@ -13,6 +13,18 @@ reference-plan view.
 The project is based on a real business need and demonstrates React, Spring
 Boot, PostgreSQL, transactional financial workflows, and JWT-protected REST APIs.
 
+## Live Demo
+
+Try the deployed application:
+
+**Demo:** https://land-sales-system.angelica-guerrero.workers.dev/
+
+Select **Explore Demo** to access the application using a prepared demo account
+and fictional data.
+
+> The demo uses free-tier infrastructure. The first request after a period of
+> inactivity may take a few seconds while the backend starts.
+
 ## Application Preview
 
 | Account statement | Lot management |
@@ -48,7 +60,8 @@ Land Sales System brings these workflows into one authenticated application.
 - Consult customer account statements and payment history.
 - Generate printable HTML receipts.
 - Consult sales and payment reports by period.
-- Display a local reference plan when its private assets are available.
+- Display a reference plan. Private plan files are excluded from Git, while the
+  public demo uses a fictitious sanitized image.
 
 ## Technical Highlights
 
@@ -65,6 +78,8 @@ Land Sales System brings these workflows into one authenticated application.
 - V8 test coverage and Playwright E2E testing with Chromium.
 - Isolated E2E environment with PostgreSQL, Spring Boot, React, and Docker Compose.
 - CI for backend, frontend, Docker image build, and E2E verification.
+- Public portfolio demo deployed with Cloudflare Workers Static Assets, Render,
+  and Neon.
 
 ## Technology Stack
 
@@ -75,6 +90,7 @@ Land Sales System brings these workflows into one authenticated application.
 | Database | PostgreSQL 16 |
 | Quality | JUnit, Mockito, Spring Test, Testcontainers, Vitest, React Testing Library, MSW, Playwright, V8 Coverage, ESLint |
 | Infrastructure | Docker, Docker Compose, Maven Wrapper, Makefile, GitHub Actions |
+| Deployment | Cloudflare Workers Static Assets, Render, Neon |
 
 ## Architecture
 
@@ -94,6 +110,33 @@ Controller → Service → Repository → PostgreSQL
 The service layer owns business rules, financial calculations, transaction
 boundaries, state transitions, and concurrency coordination.
 
+## Deployment
+
+The public deployment is a portfolio demo, not a production installation for
+real business operations.
+
+| Layer | Public deployment |
+| --- | --- |
+| Frontend | Cloudflare Workers Static Assets |
+| Backend API | Render, Spring Boot container |
+| Database | Neon managed PostgreSQL |
+| Verification | GitHub Actions CI for backend, frontend, Docker, and E2E checks |
+
+The deployed frontend talks to:
+
+- API base: `https://land-sales-api.onrender.com/api`
+- Render liveness check: `https://land-sales-api.onrender.com/actuator/health/liveness`
+- General health endpoint: `https://land-sales-api.onrender.com/actuator/health`
+
+The backend uses environment variables for PostgreSQL, JWT, CORS, bootstrap
+admin, and demo access configuration. GitHub Actions verifies the code on pull
+requests and pushes to `main`, but it does not deploy the application.
+Cloudflare and Render deployments are managed through their external GitHub
+integrations.
+
+See the [Deployment Guide](docs/deployment.md) for environment variables,
+deployment flow, and operational notes.
+
 ## Important Business Rules
 
 - A sale may contain one or multiple lots.
@@ -105,7 +148,7 @@ boundaries, state transitions, and concurrency coordination.
 - Only the final selected installment may receive a partial amount.
 - A physical lot remains `SOLD` after its financing is completed.
 - Payment numbers are consecutive integers without prefixes or leading zeros.
-- Sale folios use the technical format `VTA-YYYY-######`.
+- Sale numbers are consecutive positive integers without prefixes or leading zeros.
 
 See [Business Rules](docs/business-rules.md) for the complete rules.
 
@@ -158,15 +201,13 @@ The development Compose configuration does not include a backend container.
 
 ### Reference Plan Assets
 
-The original plan files are excluded from Git because they contain private
-business information. For local use, place these files in
-`land-sales-frontend/public/reference/`:
-
-- `plano-lotificacion.pdf`
-- `plano-lotificacion.webp`
-- `plano-lotificacion-recortado.webp`
-
-The application displays a fallback message when the image is unavailable.
+The real plan files are excluded from Git because they contain private business
+information. A private local file may be placed under
+`land-sales-frontend/public/reference/`, but it is used only when
+`VITE_REFERENCE_PLAN_IMAGE_URL` points to its public path. The public demo uses
+the versioned fictitious image at
+`land-sales-frontend/public/images/reference-plan/plan-reference-demo.png`,
+served by default from `/images/reference-plan/plan-reference-demo.png`.
 
 ## API Documentation
 
@@ -238,12 +279,12 @@ Current verified frontend results:
 
 | Metric | Result |
 | --- | ---: |
-| Test files | 23 |
-| Automated frontend tests | 148 |
-| Statements | 88.12% |
-| Branches | 81.38% |
-| Functions | 84.00% |
-| Lines | 89.69% |
+| Test files | 24 |
+| Automated frontend tests | 162 |
+| Statements | 89.97% |
+| Branches | 82.62% |
+| Functions | 86.12% |
+| Lines | 92.25% |
 | Playwright E2E flows | 2 |
 
 These results describe the current suite and should be updated as the project
@@ -257,6 +298,7 @@ is defect-free.
 - [Database Design](docs/database.md)
 - [REST API Overview](docs/api-overview.md)
 - [Development Guide](docs/development-guide.md)
+- [Deployment Guide](docs/deployment.md)
 - [Testing Guide](docs/testing.md)
 - [Spanish README](docs/README.es.md)
 - [User Manual](docs/user-manual.md)
@@ -266,8 +308,10 @@ is defect-free.
 
 The project does not currently include online card payments, a customer portal,
 interest or late fees, payment cancellation, electronic invoicing, legally
-binding contract generation, continuous deployment, or production deployment
-hardening.
+binding contract generation, or production deployment hardening.
+
+The public deployment is a portfolio demo hosted on free-tier infrastructure and
+is not configured as a production environment for real business operations.
 
 ## License
 

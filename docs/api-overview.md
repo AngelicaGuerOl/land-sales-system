@@ -4,7 +4,7 @@
 
 All application API routes use the `/api` prefix.
 
-The login endpoint is public. Other documented application endpoints require a valid JWT bearer token:
+The login endpoints are public. Other documented application endpoints require a valid JWT bearer token:
 
 ```http
 Authorization: Bearer <token>
@@ -17,7 +17,14 @@ The backend controllers and DTOs define the exact request and response contracts
 | Method | Path | Authentication | Purpose |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/login` | Public | Authenticate with username and password and receive a JWT token. |
+| `POST` | `/api/auth/demo` | Public when enabled | Authenticate with the configured active demo user and receive the same session contract as normal login. |
 | `GET` | `/api/auth/me` | Bearer JWT | Return the authenticated user. |
+
+Demo access is disabled by default with `APP_DEMO_ENABLED=false`. When enabled,
+the backend uses `APP_DEMO_USERNAME` to find an existing active user and creates
+a JWT through the normal authentication infrastructure. The frontend does not
+send or store a demo password. The demo endpoint returns the same session
+contract as normal login and does not expose secrets.
 
 ## Blocks and Lots
 
@@ -90,6 +97,28 @@ The following endpoints remain available for legacy or reference lotification da
 
 The current frontend can query the dashboard and lot workflows without requiring an active lotification record. Blocks can also be created without a lotification because the database relationship is nullable. The optional `lotificationId` filter remains available for compatibility.
 
+## Operational Health Endpoints
+
+These routes are provided by Spring Boot Actuator and are not part of the
+business API under `/api`.
+
+| Method | Path | Authentication | Purpose |
+| --- | --- | --- | --- |
+| `GET` | `/actuator/health` | Public | General application health. |
+| `GET` | `/actuator/health/liveness` | Public | Process liveness used by Render. |
+| `GET` | `/actuator/health/readiness` | Public | Indicates whether the application is ready to receive traffic. |
+
+Spring Security permits:
+
+```text
+GET /actuator/health/**
+```
+
+Render uses `/actuator/health/liveness` as its Health Check Path. These
+operational routes do not require a JWT and do not expose sensitive health
+details. They should not be treated as business API endpoints or assumed to be
+part of the main OpenAPI contract.
+
 ## Error Handling
 
 The backend uses feature-specific exceptions and a global exception handler to return consistent HTTP error responses.
@@ -133,4 +162,5 @@ Swagger UI documents the generated request and response contracts, but it does n
 - [Business Rules](business-rules.md)
 - [Database Design](database.md)
 - [Development Guide](development-guide.md)
+- [Deployment Guide](deployment.md)
 - [User Manual](user-manual.md)

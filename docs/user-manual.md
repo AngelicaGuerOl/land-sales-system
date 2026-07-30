@@ -7,9 +7,17 @@ Los textos entre comillas corresponden a etiquetas visibles de la aplicación.
 
 ## 1. Iniciar sesión
 
-1. Abre `http://localhost:5173`.
-2. Captura tu usuario y contraseña.
-3. Presiona "Iniciar sesión".
+1. En desarrollo local, abre `http://localhost:5173`.
+2. En la demo pública, abre `https://land-sales-system.angelica-guerrero.workers.dev/`.
+3. Captura tu usuario y contraseña.
+4. Presiona "Iniciar sesión".
+
+En la demo pública, también puedes presionar "Explorar la demo" para entrar con
+una cuenta preparada y datos ficticios.
+
+El backend gratuito puede tardar unos segundos en iniciar después de un periodo
+sin uso. La pantalla de login mostrará el estado de carga y, cuando el servidor
+responda, debe entrar al sistema sin que tengas que recargar manualmente.
 
 ## 2. Consultar el resumen
 
@@ -54,11 +62,12 @@ La operación valida el rango y los conflictos antes de crear los registros.
 ## 6. Consultar el plano de referencia
 
 1. Abre "Plano de referencia".
-2. Consulta la imagen local del plano.
+2. Consulta la imagen configurada del plano.
 3. Usa "Ver en grande" para ampliar.
-4. Usa "Ver PDF original" o "Descargar" cuando necesites el documento completo.
 
-Si el plano no está disponible, la aplicación mostrará un mensaje informativo.
+El plano real no forma parte del repositorio porque contiene información
+privada. La demo pública utiliza una imagen ficticia y sanitizada. Si el plano
+configurado no está disponible, la aplicación mostrará un mensaje informativo.
 
 ## 7. Registrar clientes
 

@@ -146,4 +146,5 @@ The application displays the following Spanish labels for internal states:
 - [Database Design](database.md)
 - [REST API Overview](api-overview.md)
 - [Development Guide](development-guide.md)
+- [Deployment Guide](deployment.md)
 - [User Manual](user-manual.md)

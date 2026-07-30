@@ -60,6 +60,35 @@ The relationship between `blocks` and `lotifications` is nullable after migratio
 
 The reference-plan screen uses static visual content and does not depend on these tables for its main user-facing behavior.
 
+## Public Demo Database on Neon
+
+The public demo uses managed PostgreSQL on Neon.
+
+The backend connects to Neon through environment variables configured in
+Render:
+
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+
+Real database credentials, hostnames, connection strings, and Neon project IDs
+must not be stored in Git.
+
+The public demo uses the same schema defined by Flyway migrations. At startup,
+Flyway applies pending migrations and Hibernate validates the schema with
+`ddl-auto=validate`. Structural changes must be introduced through new Flyway
+migrations, not manual unversioned edits in Neon.
+
+GitHub Actions verifies the repository but does not create, migrate, or deploy
+Neon. The public demo database should contain only fictional data.
+
+The public reference-plan image is not stored in Neon. It is a static frontend
+asset served from:
+
+```text
+/images/reference-plan/plan-reference-demo.png
+```
+
 ## Domain Model
 
 A physical lot is stored independently from the financial conditions under which it is sold.
@@ -551,4 +580,5 @@ When changing the schema:
 - [Business Rules](business-rules.md)
 - [REST API Overview](api-overview.md)
 - [Development Guide](development-guide.md)
+- [Deployment Guide](deployment.md)
 - [User Manual](user-manual.md)
